@@ -71,7 +71,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the update platform for DomoLink Pool Control."""
     installed_ver = get_installed_version()
-    update_entity = DomoLink Pool ControlPoolUpdateEntity(
+    update_entity = DomolinkPoolUpdateEntity(
         hass=hass,
         entry=entry,
         installed_version=installed_ver,
@@ -81,7 +81,7 @@ async def async_setup_entry(
     async_add_entities([update_entity], False)
 
 
-class DomoLink Pool ControlPoolUpdateEntity(UpdateEntity):
+class DomolinkPoolUpdateEntity(UpdateEntity):
     """Representation of the DomoLink Pool Control update entity."""
 
     _attr_has_entity_name = True
@@ -185,6 +185,7 @@ class DomoLink Pool ControlPoolUpdateEntity(UpdateEntity):
 
                 if getattr(self, "hass", None) and getattr(self, "entity_id", None):
                     try:
+                        self.async_write_ha_state()
                     except Exception:
                         pass
                 _LOGGER.info(
@@ -283,10 +284,10 @@ class DomoLink Pool ControlPoolUpdateEntity(UpdateEntity):
 
             self._attr_update_percentage = 40
             if hasattr(self, "hass") and self.hass is not None and getattr(self, "entity_id", None) is not None:
-            try:
-                self.async_write_ha_state()
-            except Exception:
-                pass
+                try:
+                    self.async_write_ha_state()
+                except Exception:
+                    pass
 
             def _do_extract_and_copy() -> None:
                 extract_path = os.path.join(temp_dir, "extracted")
@@ -333,20 +334,20 @@ class DomoLink Pool ControlPoolUpdateEntity(UpdateEntity):
 
             self._attr_update_percentage = 90
             if hasattr(self, "hass") and self.hass is not None and getattr(self, "entity_id", None) is not None:
-            try:
-                self.async_write_ha_state()
-            except Exception:
-                pass
+                try:
+                    self.async_write_ha_state()
+                except Exception:
+                    pass
 
             self._update_sidebar_panel(False)
             self._attr_installed_version = self._attr_latest_version
             self._attr_update_percentage = 100
             self._attr_in_progress = False
             if hasattr(self, "hass") and self.hass is not None and getattr(self, "entity_id", None) is not None:
-            try:
-                self.async_write_ha_state()
-            except Exception:
-                pass
+                try:
+                    self.async_write_ha_state()
+                except Exception:
+                    pass
 
             _LOGGER.info("DomoLink Pool Control update complete! Restarting Home Assistant...")
             await asyncio.sleep(1.5)
@@ -363,10 +364,10 @@ class DomoLink Pool ControlPoolUpdateEntity(UpdateEntity):
             self._attr_in_progress = False
             self._attr_update_percentage = None
             if hasattr(self, "hass") and self.hass is not None and getattr(self, "entity_id", None) is not None:
-            try:
-                self.async_write_ha_state()
-            except Exception:
-                pass
+                try:
+                    self.async_write_ha_state()
+                except Exception:
+                    pass
             _LOGGER.error("DomoLink Pool Control auto-update failed: %s", err, exc_info=True)
             raise HomeAssistantError(f"Échec de la mise à jour : {err}") from err
         finally:
