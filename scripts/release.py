@@ -14,7 +14,7 @@ import sys
 import urllib.request
 
 REPO_OWNER = "SocrateMobile"
-REPO_NAME = "Flipr_Pool"
+REPO_NAME = "Domolink-Pool-Control"
 GITHUB_REPO = f"{REPO_OWNER}/{REPO_NAME}"
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
