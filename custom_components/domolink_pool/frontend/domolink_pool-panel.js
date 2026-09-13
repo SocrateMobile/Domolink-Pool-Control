@@ -1925,4 +1925,9 @@ function launchSocrateRulesEasterEgg(targetRoot) {
   animate();
 }
 
-customElements.define("domolink_pool-panel", DomoLinkPoolControlPanel);
+if (!customElements.get("domolink-pool-panel")) {
+  customElements.define("domolink-pool-panel", DomoLinkPoolControlPanel);
+}
+if (!customElements.get("domolink_pool-panel")) {
+  customElements.define("domolink_pool-panel", DomoLinkPoolControlPanel);
+}
