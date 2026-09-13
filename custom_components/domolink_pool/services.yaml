@@ -1,0 +1,48 @@
+force_cloud_sync:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: domolink_pool
+
+update_dimensions:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: domolink_pool
+    length:
+      required: true
+      example: 8.0
+      selector:
+        number:
+          min: 0.0
+          max: 50.0
+          step: 0.1
+          mode: box
+    width:
+      required: true
+      example: 4.0
+      selector:
+        number:
+          min: 0.0
+          max: 50.0
+          step: 0.1
+          mode: box
+    depth:
+      required: true
+      example: 1.5
+      selector:
+        number:
+          min: 0.0
+          max: 5.0
+          step: 0.1
+          mode: box
+
+dump_hub_debug:
+  fields: {}
+
+dump_entities:
+  fields: {}

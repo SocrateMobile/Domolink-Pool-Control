@@ -1,0 +1,310 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tipo di installazione DomoLink Pool Control",
+        "description": "Scegli il tipo di installazione.",
+        "data": {
+          "installation_type": "Modalità di installazione"
+        }
+      },
+      "cloud_auth": {
+        "title": "Autenticazione Cloud",
+        "description": "Inserisci le credenziali del tuo account DomoLink Pool Control.",
+        "data": {
+          "email": "Indirizzo Email",
+          "password": "Password"
+        }
+      },
+      "select_device": {
+        "title": "Seleziona Dispositivo",
+        "description": "Scegli il dispositivo DomoLink Pool Control da integrare.",
+        "data": {
+          "domolink_pool_id": "Dispositivo"
+        }
+      },
+      "local_bt": {
+        "title": "Modalità Bluetooth Locale",
+        "description": "La modalità BLE locale è fortemente sconsigliata poiché perde la cronologia dei dati e gli avvisi avanzati. Procedere comunque?",
+        "data": {
+          "confirm": "Sì, configura solo BLE Locale"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Impostazioni",
+        "description": "Configura i parametri della tua piscina.",
+        "data": {
+          "pool_length": "Lunghezza della piscina (m)",
+          "pool_width": "Larghezza della piscina (m)",
+          "pool_depth": "Profondità media (m)",
+          "tac": "Alcalinità (TAC)",
+          "th": "Durezza (TH)",
+          "cya": "Acido Cianurico (CYA)",
+          "tds": "Solidi Disciolti Totali (TDS)",
+          "enable_ble": "Abilita scanner Bluetooth"
+        }
+      },
+      "ble_scan": {
+        "title": "Scansione Bluetooth",
+        "description": "Seleziona il tuo DomoLink Pool Control tra i dispositivi vicini.",
+        "data": {
+          "ble_device": "Dispositivo Rilevato"
+        }
+      },
+      "ble_confirm": {
+        "title": "Configurazione Bluetooth",
+        "description": "Conferma le impostazioni del tuo DomoLink Pool Control."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperatura acqua"
+      },
+      "ph": {
+        "name": "pH"
+      },
+      "redox": {
+        "name": "Potenziale Redox"
+      },
+      "battery": {
+        "name": "Livello batteria"
+      },
+      "conductivity": {
+        "name": "Conduttività"
+      },
+      "uv_index": {
+        "name": "Indice UV"
+      },
+      "air_temp": {
+        "name": "Temperatura aria"
+      },
+      "water_state": {
+        "name": "Stato acqua"
+      },
+      "chlorine": {
+        "name": "Disinfettante (Cloro)"
+      },
+      "last_update": {
+        "name": "Ultima misurazione"
+      },
+      "pool_volume": {
+        "name": "Volume piscina"
+      },
+      "dose_ph_minus": {
+        "name": "Dose pH-"
+      },
+      "dose_ph_plus": {
+        "name": "Dosis pH+"
+      },
+      "dose_cl_maint": {
+        "name": "Dose Cloro (Mantenimento)"
+      },
+      "dose_cl_shock": {
+        "name": "Dose Cloro (Shock)"
+      },
+      "pump_hours": {
+        "name": "Durata filtrazione"
+      },
+      "conseil_filtration": {
+        "name": "Consiglio filtrazione"
+      },
+      "last_alert": {
+        "name": "Ultimo allarme"
+      },
+      "lsi": {
+        "name": "Indice LSI"
+      },
+      "lsi_status": {
+        "name": "Stato acqua (LSI)"
+      },
+      "ph_equilibre": {
+        "name": "pH di Equilibrio"
+      },
+      "free_chlorine": {
+        "name": "Cloro Libero Stimato"
+      },
+      "active_chlorine": {
+        "name": "Cloro Attivo (HOCl)"
+      },
+      "data_source": {
+        "name": "Sorgente dati"
+      },
+      "ble_rssi": {
+        "name": "Segnale BLE"
+      },
+      "ble_status": {
+        "name": "Stato BLE"
+      },
+      "version": {
+        "name": "Versione integrazione"
+      },
+      "air_temp_next_hour": {
+        "name": "Temperatura aria (+1h)"
+      },
+      "cloud_cover": {
+        "name": "Copertura nuvolosa"
+      },
+      "weather_icon": {
+        "name": "Meteo attuale"
+      },
+      "wind_speed": {
+        "name": "Velocità del vento"
+      },
+      "rain_probability": {
+        "name": "Probabilità di pioggia"
+      },
+      "air_temp_max_today": {
+        "name": "Temp max aria (Oggi)"
+      },
+      "air_temp_min_today": {
+        "name": "Temp min aria (Oggi)"
+      },
+      "water_temp_forecast_1h": {
+        "name": "Temp acqua prevista (+1h)"
+      },
+      "water_temp_forecast_tomorrow": {
+        "name": "Temp acqua prevista (Domani)"
+      },
+      "ph_avg_yesterday": {
+        "name": "pH medio (Recente)"
+      },
+      "redox_avg_yesterday": {
+        "name": "Redox medio (Recente)"
+      },
+      "water_temp_avg_yesterday": {
+        "name": "Temp acqua media (Recente)"
+      },
+      "dose_tac_plus": {
+        "name": "Dose TAC+ (Bicarbonato)"
+      },
+      "commercial_type": {
+        "name": "Modello DomoLink Pool Control"
+      },
+      "firmware_version": {
+        "name": "Versione Firmware"
+      }
+    },
+    "switch": {
+      "pump_filtration": {
+        "name": "Pompa filtrazione"
+      },
+      "ble_scan": {
+        "name": "Scanner BLE"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Forza aggiornamento Cloud"
+      }
+    },
+    "select": {
+      "mode_filtration": {
+        "name": "Modalità filtrazione",
+        "state": {
+          "auto": "Auto",
+          "manual": "Manuale",
+          "off": "Spento",
+          "planning": "Pianificazione"
+        }
+      }
+    },
+    "number": {
+      "target_ph": {
+        "name": "pH Obiettivo"
+      },
+      "target_chlorine": {
+        "name": "Cloro Obiettivo"
+      },
+      "pool_length": {
+        "name": "Lunghezza piscina"
+      },
+      "pool_width": {
+        "name": "Larghezza piscina"
+      },
+      "pool_depth": {
+        "name": "Profondità media"
+      },
+      "pool_volume": {
+        "name": "Volume"
+      },
+      "param_tac": {
+        "name": "Alcalinità (TAC)"
+      },
+      "param_th": {
+        "name": "Durezza (TH)"
+      },
+      "param_cya": {
+        "name": "Stabilizzante (CYA)"
+      },
+      "param_tds": {
+        "name": "Solidi Dissolti (TDS)"
+      },
+      "target_ph_min": {
+        "name": "pH Min"
+      },
+      "target_ph_max": {
+        "name": "pH Max"
+      },
+      "target_chlorine_min": {
+        "name": "Cloro Min"
+      },
+      "target_chlorine_max": {
+        "name": "Cloro Max"
+      }
+    },
+    "binary_sensor": {
+      "ph_status": {
+        "name": "Stato pH"
+      },
+      "chlorine_status": {
+        "name": "Stato cloro"
+      },
+      "need_calib": {
+        "name": "Calibrazione sonde richiesta"
+      },
+      "subscription_valid": {
+        "name": "Abbonamento DomoLink Pool Control"
+      }
+    }
+  },
+  "services": {
+    "force_cloud_sync": {
+      "name": "Force Cloud Sync",
+      "description": "Force the integration to immediately fetch the latest data from the DomoLink Pool Control Cloud API.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The target DomoLink Pool Control to synchronize."
+        }
+      }
+    },
+    "update_dimensions": {
+      "name": "Update dimensions",
+      "description": "Updates the pool dimensions used for treatment dose calculations.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The DomoLink Pool Control associated with the pool."
+        },
+        "length": {
+          "name": "Length (m)",
+          "description": "The length of the pool in meters."
+        },
+        "width": {
+          "name": "Width (m)",
+          "description": "The width of the pool in meters."
+        },
+        "depth": {
+          "name": "Average depth (m)",
+          "description": "The average depth in meters."
+        }
+      }
+    }
+  }
+}

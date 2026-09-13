@@ -1,0 +1,399 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Type d'installation DomoLink Pool Control",
+        "description": "Choisissez le type d'installation.",
+        "data": {
+          "installation_type": "Mode d'installation"
+        }
+      },
+      "cloud_auth": {
+        "title": "Authentification Cloud",
+        "description": "Saisissez les identifiants de votre compte DomoLink Pool Control.",
+        "data": {
+          "email": "Adresse E-mail",
+          "password": "Mot de passe"
+        }
+      },
+      "select_device": {
+        "title": "Sélection de l'appareil",
+        "description": "Choisissez l'appareil DomoLink Pool Control à intégrer.",
+        "data": {
+          "domolink_pool_id": "Appareil"
+        }
+      },
+      "local_bt": {
+        "title": "Mode Bluetooth Local",
+        "description": "Le mode Bluetooth Local exclusif est fortement déconseillé car il entraîne la perte de l'historique et des alertes avancées. Voulez-vous continuer ?",
+        "data": {
+          "confirm": "Oui, configurer le Bluetooth Local uniquement"
+        }
+      },
+      "mix_ble_confirm": {
+        "data": {
+          "choice": "Mode Bluetooth"
+        }
+      },
+      "manual_mac_choice": {
+        "title": "DomoLink Pool Control introuvable en Bluetooth",
+        "description": "Le DomoLink Pool Control n'a pas été détecté automatiquement. Que voulez-vous faire ?",
+        "menu_options": {
+          "manual_mac": "Entrer manuellement l'adresse MAC",
+          "pool_details": "Ignorer le mode Bluetooth pour l'instant",
+          "select_device": "Retour à la sélection de l'appareil"
+        }
+      },
+      "manual_mac": {
+        "title": "Adresse MAC manuelle",
+        "description": "Saisissez l'adresse MAC Bluetooth de votre DomoLink Pool Control (ex: AA:BB:CC:DD:EE:FF).",
+        "data": {
+          "ble_address": "Adresse MAC"
+        }
+      },
+      "manual_device": {
+        "title": "Saisie manuelle de l'appareil",
+        "description": "Saisissez manuellement l'identifiant de votre DomoLink Pool Control.",
+        "data": {
+          "domolink_pool_id": "Numéro de série / ID",
+          "ble_address": "Adresse MAC",
+          "pool_length": "Longueur de la Piscine",
+          "pool_width": "Largeur de la Piscine",
+          "pool_depth": "Profondeur de la Piscine",
+          "tac": "Valeur du test manuel de TAC",
+          "th": "Valeur du test manuel de TH",
+          "cya": "Valeur du test manuel de CYA",
+          "tds": "Valeur du test manuel de TDS"
+        }
+      },
+      "pool_details": {
+        "title": "Détails du bassin",
+        "description": "Ces dimensions servent à calculer les doses exactes de produits.",
+        "data": {
+          "pool_length": "Longueur de la Piscine",
+          "pool_width": "Largeur de la Piscine",
+          "pool_depth": "Profondeur de la Piscine",
+          "tac": "Valeur du test manuel de TAC",
+          "th": "Valeur du test manuel de TH",
+          "cya": "Valeur du test manuel de CYA",
+          "tds": "Valeur du test manuel de TDS"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Paramètres",
+        "description": "Configurez les paramètres de votre piscine.",
+        "data": {
+          "pool_length": "Longueur de la Piscine",
+          "pool_width": "Largeur de la Piscine",
+          "pool_depth": "Profondeur de la Piscine",
+          "tac": "Valeur du test manuel de TAC",
+          "th": "Valeur du test manuel de TH",
+          "cya": "Valeur du test manuel de CYA",
+          "tds": "Valeur du test manuel de TDS",
+          "ble_enabled": "Activer le mode Bluetooth",
+          "ble_address": "Adresse MAC (optionnel)",
+          "scan_ble": "Lancer un scan Bluetooth pour trouver DomoLink Pool Control"
+        }
+      },
+      "ble_scan": {
+        "title": "Scan Bluetooth",
+        "description": "Sélectionnez votre DomoLink Pool Control parmi les appareils détectés à proximité.",
+        "data": {
+          "ble_device": "Appareil détecté"
+        }
+      },
+      "ble_confirm": {
+        "title": "Configuration Bluetooth",
+        "description": "Confirmez les paramètres de votre DomoLink Pool Control."
+      }
+    }
+  },
+  "entity": {
+    "button": {
+      "force_refresh": {
+        "name": "Forcer rafraîchissement Cloud"
+      },
+      "generate_card": {
+        "name": "Générer la carte Lovelace"
+      }
+    },
+    "binary_sensor": {
+      "ph_status": {
+        "name": "Statut pH"
+      },
+      "chlorine_status": {
+        "name": "Statut Chlore"
+      },
+      "need_calib": {
+        "name": "Étalonnage des sondes requis"
+      },
+      "subscription_valid": {
+        "name": "Abonnement DomoLink Pool Control"
+      }
+    },
+    "sensor": {
+      "temperature": {
+        "name": "Température de l'eau"
+      },
+      "ph": {
+        "name": "pH"
+      },
+      "redox": {
+        "name": "Potentiel Redox"
+      },
+      "chlorine": {
+        "name": "Désinfectant (Chlore)"
+      },
+      "conductivity": {
+        "name": "Conductivité"
+      },
+      "water_state": {
+        "name": "État de l'eau"
+      },
+      "last_update": {
+        "name": "Dernière mesure"
+      },
+      "air_temp": {
+        "name": "Température de l'air"
+      },
+      "air_temp_next_hour": {
+        "name": "Température de l'air (+1h)"
+      },
+      "uv_index": {
+        "name": "Indice UV"
+      },
+      "cloud_cover": {
+        "name": "Couverture nuageuse"
+      },
+      "weather_icon": {
+        "name": "Météo actuelle"
+      },
+      "wind_speed": {
+        "name": "Vitesse du vent"
+      },
+      "rain_probability": {
+        "name": "Probabilité de pluie"
+      },
+      "air_temp_max_today": {
+        "name": "Température air Max (Aujourd'hui)"
+      },
+      "air_temp_min_today": {
+        "name": "Température air Min (Aujourd'hui)"
+      },
+      "water_temp_forecast_1h": {
+        "name": "Température eau prévue (+1h)"
+      },
+      "water_temp_forecast_tomorrow": {
+        "name": "Température eau prévue (Demain)"
+      },
+      "ph_avg_yesterday": {
+        "name": "pH moyen (Récent)"
+      },
+      "redox_avg_yesterday": {
+        "name": "Redox moyen (Récent)"
+      },
+      "water_temp_avg_yesterday": {
+        "name": "Température eau moyenne (Récente)"
+      },
+      "lsi": {
+        "name": "Indice LSI"
+      },
+      "lsi_status": {
+        "name": "Statut de l'eau (LSI)"
+      },
+      "ph_equilibre": {
+        "name": "pH d'Équilibre"
+      },
+      "free_chlorine": {
+        "name": "Chlore Libre Est."
+      },
+      "active_chlorine": {
+        "name": "Chlore Actif (HOCl)"
+      },
+      "dose_ph_minus": {
+        "name": "Dose pH-"
+      },
+      "dose_ph_plus": {
+        "name": "Dose pH+"
+      },
+      "dose_tac_plus": {
+        "name": "Dose TAC+ (Bicarbonate)"
+      },
+      "dose_cl_maint": {
+        "name": "Dose Chlore (Entretien)"
+      },
+      "dose_cl_shock": {
+        "name": "Dose Chlore (Choc)"
+      },
+      "pump_hours": {
+        "name": "Durée Filtration"
+      },
+      "conseil_filtration": {
+        "name": "Conseil Filtration"
+      },
+      "pool_volume": {
+        "name": "Volume de la piscine"
+      },
+      "battery": {
+        "name": "Niveau de Batterie"
+      },
+      "commercial_type": {
+        "name": "Modèle DomoLink Pool Control"
+      },
+      "firmware_version": {
+        "name": "Version du Firmware"
+      },
+      "sigfox_status": {
+        "name": "Statut réseau Sigfox"
+      },
+      "resets_counter": {
+        "name": "Compteur de redémarrages"
+      },
+      "last_resume_call": {
+        "name": "Dernier contact Cloud"
+      },
+      "last_alert": {
+        "name": "Dernière Alerte"
+      },
+      "data_source": {
+        "name": "Source des données"
+      },
+      "ble_rssi": {
+        "name": "Signal BLE"
+      },
+      "ble_status": {
+        "name": "Statut BLE"
+      },
+      "version": {
+        "name": "Version de l'intégration"
+      }
+    },
+    "switch": {
+      "pump_filtration": {
+        "name": "Pompe Filtration"
+      },
+      "ble_scan": {
+        "name": "Scanner BLE"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Forcer rafraîchissement Cloud"
+      }
+    },
+    "select": {
+      "mode_filtration": {
+        "name": "Mode Filtration",
+        "state": {
+          "auto": "Auto",
+          "manual": "Manuel",
+          "off": "Désactivé",
+          "planning": "Planning"
+        }
+      }
+    },
+    "number": {
+      "target_ph_min": {
+        "name": "pH Min"
+      },
+      "target_ph_max": {
+        "name": "pH Max"
+      },
+      "target_chlorine_min": {
+        "name": "Chlore Min"
+      },
+      "target_chlorine_max": {
+        "name": "Chlore Max"
+      },
+      "pool_length": {
+        "name": "Longueur Piscine"
+      },
+      "pool_width": {
+        "name": "Largeur Piscine"
+      },
+      "pool_depth": {
+        "name": "Profondeur Moyenne"
+      },
+      "pool_volume": {
+        "name": "Volume Piscine"
+      },
+      "param_tac": {
+        "name": "Alcalinité (TAC)"
+      },
+      "param_th": {
+        "name": "Dureté (TH)"
+      },
+      "param_cya": {
+        "name": "Stabilisant (CYA)"
+      },
+      "param_tds": {
+        "name": "Solides Dissous (TDS)"
+      },
+      "target_ph": {
+        "name": "pH Cible"
+      },
+      "target_chlorine": {
+        "name": "Chlore Cible"
+      }
+    }
+  },
+  "services": {
+    "force_cloud_sync": {
+      "name": "Forcer synchronisation Cloud",
+      "description": "Force l'intégration à récupérer immédiatement les dernières données depuis l'API Cloud de DomoLink Pool Control.",
+      "fields": {
+        "device_id": {
+          "name": "Appareil DomoLink Pool Control",
+          "description": "Le DomoLink Pool Control cible à synchroniser."
+        }
+      }
+    },
+    "update_dimensions": {
+      "name": "Mettre à jour les dimensions",
+      "description": "Met à jour les dimensions de la piscine pour le calcul des doses de traitement.",
+      "fields": {
+        "device_id": {
+          "name": "Appareil DomoLink Pool Control",
+          "description": "Le DomoLink Pool Control associé au bassin."
+        },
+        "length": {
+          "name": "Longueur (m)",
+          "description": "La longueur du bassin en mètres."
+        },
+        "width": {
+          "name": "Largeur (m)",
+          "description": "La largeur du bassin en mètres."
+        },
+        "depth": {
+          "name": "Profondeur moyenne (m)",
+          "description": "La profondeur moyenne en mètres."
+        }
+      }
+    },
+    "dump_hub_debug": {
+      "name": "Exporter le diagnostic du Hub (JSON)",
+      "description": "Exécute les requêtes d'analyse du Hub DomoLink Pool Control et génère le fichier /config/domolink_pool_hub_debug.json.",
+      "fields": {}
+    }
+  },
+  "selector": {
+    "installation_type": {
+      "options": {
+        "mix": "Données Cloud et Locales",
+        "local": "Données Locales par BT",
+        "cloud": "Données Cloud DomoLink Pool Control"
+      }
+    },
+    "mix_ble_confirm_choice": {
+      "options": {
+        "confirm": "Utiliser ce DomoLink Pool Control",
+        "manual": "Entrer manuellement l'adresse MAC du DomoLink Pool Control",
+        "ignore": "Ne pas utiliser le mode local"
+      }
+    }
+  }
+}

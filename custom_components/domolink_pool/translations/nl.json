@@ -1,0 +1,282 @@
+{
+  "config": {
+    "error": {
+      "invalid_auth_detailed": "DomoLink Pool Control-fout: {error_info}",
+      "cannot_connect": "Verbinding mislukt: {error_info}",
+      "invalid_auth": "Ongeldige inloggegevens"
+    },
+    "step": {
+      "user": {
+        "title": "DomoLink Pool Control Pool Configuratie",
+        "description": "Voer je DomoLink Pool Control-gegevens in. Zwembadafmetingen zijn optioneel (laat op 0 indien onbekend) maar vereist voor doseringsberekeningen.",
+        "data": {
+          "email": "E-mail",
+          "password": "Wachtwoord",
+          "domolink_pool_id": "Module-ID (S/N)",
+          "pool_length": "Lengte zwembad (m)",
+          "pool_width": "Breedte zwembad (m)",
+          "pool_depth": "Gemiddelde diepte (m)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Zwembadafmetingen",
+        "description": "Geef je zwembadafmetingen op om de behandelingsdoseringen (pH, chloor) en de aanbevolen filtratietijd te berekenen. Laat op 0 indien niet gewenst.",
+        "data": {
+          "pool_length": "Lengte (m)",
+          "pool_width": "Breedte (m)",
+          "pool_depth": "Gemiddelde diepte (m)"
+        }
+      }
+    }
+  },
+  "services": {
+    "force_cloud_sync": {
+      "name": "Force Cloud Sync",
+      "description": "Force the integration to immediately fetch the latest data from the DomoLink Pool Control Cloud API.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The target DomoLink Pool Control to synchronize."
+        }
+      }
+    },
+    "update_dimensions": {
+      "name": "Update dimensions",
+      "description": "Updates the pool dimensions used for treatment dose calculations.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The DomoLink Pool Control associated with the pool."
+        },
+        "length": {
+          "name": "Length (m)",
+          "description": "The length of the pool in meters."
+        },
+        "width": {
+          "name": "Width (m)",
+          "description": "The width of the pool in meters."
+        },
+        "depth": {
+          "name": "Average depth (m)",
+          "description": "The average depth in meters."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "version": {
+        "name": "Integratieversie"
+      },
+      "temperature": {
+        "name": "Watertemperatuur"
+      },
+      "ph": {
+        "name": "pH"
+      },
+      "redox": {
+        "name": "Redox potentiaal"
+      },
+      "chlorine": {
+        "name": "Desinfectiemiddel (Chloor)"
+      },
+      "conductivity": {
+        "name": "Geleidbaarheid"
+      },
+      "water_state": {
+        "name": "Waterstatus"
+      },
+      "last_update": {
+        "name": "Laatste meting"
+      },
+      "air_temp": {
+        "name": "Luchttemperatuur"
+      },
+      "air_temp_next_hour": {
+        "name": "Luchttemperatuur (+1u)"
+      },
+      "uv_index": {
+        "name": "UV-index"
+      },
+      "cloud_cover": {
+        "name": "Bewolking"
+      },
+      "weather_icon": {
+        "name": "Huidig weer"
+      },
+      "wind_speed": {
+        "name": "Windsnelheid"
+      },
+      "rain_probability": {
+        "name": "Kans op regen"
+      },
+      "air_temp_max_today": {
+        "name": "Max luchttemperatuur (Vandaag)"
+      },
+      "air_temp_min_today": {
+        "name": "Min luchttemperatuur (Vandaag)"
+      },
+      "water_temp_forecast_1h": {
+        "name": "Voorspelde watertemperatuur (+1u)"
+      },
+      "water_temp_forecast_tomorrow": {
+        "name": "Voorspelde watertemperatuur (Morgen)"
+      },
+      "ph_avg_yesterday": {
+        "name": "Gemiddelde pH (Recent)"
+      },
+      "redox_avg_yesterday": {
+        "name": "Gemiddelde Redox (Recent)"
+      },
+      "water_temp_avg_yesterday": {
+        "name": "Gemiddelde watertemperatuur (Recent)"
+      },
+      "lsi": {
+        "name": "LSI-index"
+      },
+      "lsi_status": {
+        "name": "Waterstatus (LSI)"
+      },
+      "ph_equilibre": {
+        "name": "Evenwichts-pH"
+      },
+      "free_chlorine": {
+        "name": "Geschatte vrije chloor"
+      },
+      "active_chlorine": {
+        "name": "Actieve chloor (HOCl)"
+      },
+      "dose_ph_minus": {
+        "name": "pH- Dosis"
+      },
+      "dose_ph_plus": {
+        "name": "pH+ Dosis"
+      },
+      "dose_tac_plus": {
+        "name": "TAC+ Dosis (Bicarbonaat)"
+      },
+      "dose_cl_maint": {
+        "name": "Chloordosis (Onderhoud)"
+      },
+      "dose_cl_shock": {
+        "name": "Chloordosis (Shock)"
+      },
+      "pump_hours": {
+        "name": "Filtratie duur"
+      },
+      "conseil_filtration": {
+        "name": "Filtratie advies"
+      },
+      "pool_volume": {
+        "name": "Zwembadvolume"
+      },
+      "battery": {
+        "name": "Batterijniveau"
+      },
+      "commercial_type": {
+        "name": "DomoLink Pool Control-model"
+      },
+      "firmware_version": {
+        "name": "Firmwareversie"
+      },
+      "last_alert": {
+        "name": "Laatste waarschuwing"
+      },
+      "data_source": {
+        "name": "Gegevensbron"
+      },
+      "ble_rssi": {
+        "name": "BLE-signaal"
+      },
+      "ble_status": {
+        "name": "BLE-status"
+      }
+    },
+    "binary_sensor": {
+      "ph_status": {
+        "name": "pH-status"
+      },
+      "chlorine_status": {
+        "name": "Chloor-status"
+      },
+      "need_calib": {
+        "name": "Sonde-calibratie vereist"
+      },
+      "subscription_valid": {
+        "name": "DomoLink Pool Control-abonnement"
+      }
+    },
+    "switch": {
+      "pump_filtration": {
+        "name": "Filtratiepomp"
+      },
+      "ble_scan": {
+        "name": "BLE-scanner"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Forceer cloud vernieuwing"
+      }
+    },
+    "select": {
+      "mode_filtration": {
+        "name": "Filtratiemodus",
+        "state": {
+          "auto": "Auto",
+          "manual": "Handmatig",
+          "off": "Uit",
+          "planning": "Planning"
+        }
+      }
+    },
+    "number": {
+      "target_ph": {
+        "name": "Doel-pH"
+      },
+      "target_ph_min": {
+        "name": "Min pH"
+      },
+      "target_ph_max": {
+        "name": "Max pH"
+      },
+      "target_chlorine": {
+        "name": "Doel-chloor"
+      },
+      "target_chlorine_min": {
+        "name": "Min chloor"
+      },
+      "target_chlorine_max": {
+        "name": "Max chloor"
+      },
+      "pool_length": {
+        "name": "Zwembadlengte"
+      },
+      "pool_width": {
+        "name": "Zwembadbreedte"
+      },
+      "pool_depth": {
+        "name": "Gemiddelde diepte"
+      },
+      "pool_volume": {
+        "name": "Volume"
+      },
+      "param_tac": {
+        "name": "Alkaliniteit (TAC)"
+      },
+      "param_th": {
+        "name": "Hardheid (TH)"
+      },
+      "param_cya": {
+        "name": "Stabilisator (CYA)"
+      },
+      "param_tds": {
+        "name": "Opgeloste stoffen (TDS)"
+      }
+    }
+  }
+}

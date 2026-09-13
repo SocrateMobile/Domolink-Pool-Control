@@ -1,0 +1,202 @@
+# ==============================================================================
+# CARTE LOVELACE "FLIPR OFFICIAL APP UI" (v5.3.0) - REGLAGE CADRAN CHLORE
+# ==============================================================================
+# Carte personnalisée pour Home Assistant imitant au pixel près l'interface
+# officielle de l'application mobile Flipr.
+#
+# Prérequis : custom:button-card (disponible via HACS Frontend)
+# ==============================================================================
+
+type: custom:button-card
+show_name: false
+show_icon: false
+show_state: false
+styles:
+  card:
+    - padding: 0px
+    - margin: 0px
+    - border-radius: 28px
+    - overflow: hidden
+    - background: "#0f172a"
+    - box-shadow: "0 10px 30px rgba(0,0,0,0.3)"
+    - width: 100%
+  custom_fields:
+    app_container:
+      - width: 100%
+      - padding: 0px
+
+custom_fields:
+  app_container: |
+    [[[
+      // Détection automatique du préfixe des entités Flipr
+      const ph_entity_name = Object.keys(states).find(e => e.startsWith('sensor.') && e.includes('flipr') && e.endsWith('_ph'));
+      const prefix = ph_entity_name ? ph_entity_name.replace('_ph', '') : 'sensor.flipr';
+      const ph_status_entity = Object.keys(states).find(e => e.includes('flipr') && e.endsWith('_statut_ph'));
+      const cl_status_entity = Object.keys(states).find(e => e.includes('flipr') && e.endsWith('_statut_chlore'));
+
+      const air_temp = states[`${prefix}_temperature_de_l_air`] ? states[`${prefix}_temperature_de_l_air`].state : '26';
+      const uv_index = states[`${prefix}_indice_uv`] ? states[`${prefix}_indice_uv`].state : '0';
+      const water_temp = states[`${prefix}_temperature_de_l_eau`] ? states[`${prefix}_temperature_de_l_eau`].state : '29';
+      const ph_val = states[`${prefix}_ph`] ? states[`${prefix}_ph`].state : '7.1';
+      const ph_status = ph_status_entity && states[ph_status_entity] ? states[ph_status_entity].state : 'Parfait';
+      const cl_val = states[`${prefix}_desinfectant_chlore`] ? states[`${prefix}_desinfectant_chlore`].state : '0.6';
+      const cl_status = cl_status_entity && states[cl_status_entity] ? states[cl_status_entity].state : 'Parfait';
+      const last_measure = states[`${prefix}_derniere_mesure`] ? states[`${prefix}_derniere_mesure`].state : 'En direct';
+      const water_state = states[`${prefix}_etat_de_l_eau`] ? states[`${prefix}_etat_de_l_eau`].state : 'Tout est parfait, bravo !';
+      const redox_val = states[`${prefix}_potentiel_redox`] ? states[`${prefix}_potentiel_redox`].state : '545';
+      
+      return `
+        <div style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box; background: #eef4f8; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+          
+          <!-- 1. EN-TÊTE & SELECTIONS -->
+          <div style="padding: 16px 18px 8px 18px; text-align: center; background: #eef4f8;">
+            <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              Piscine <span style="font-size: 10px; color: #64748b;">▼</span>
+            </div>
+            
+            <div style="display: flex; background: #dce4ed; border-radius: 14px; padding: 3px; width: 100%; box-sizing: border-box;">
+              <div style="flex: 1; padding: 8px 12px; background: #162338; color: white; border-radius: 11px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                <span style="font-size: 14px;">🤿</span> Analyse
+              </div>
+              <div style="flex: 1; padding: 8px 12px; color: #475569; border-radius: 11px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span style="font-size: 14px;">🔲</span> Contrôle
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. SECTION HAUTE CLAIRE (Air, UV, Redox, Dernière Mesure) -->
+          <div style="padding: 6px 18px 14px 18px; background: #eef4f8;">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <div style="display: flex; align-items: baseline; gap: 6px;">
+                <span style="font-size: 15px; color: #64748b; font-weight: 500;">air</span>
+                <span style="font-size: 34px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">${air_temp}°C</span>
+                <span style="color: #0284c7; font-weight: 800; font-size: 18px;">↘</span>
+              </div>
+              
+              <div style="height: 24px; width: 1px; background: #cbd5e1;"></div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="font-size: 18px;">☁️ <span style="font-size: 12px; color: #94a3b8;">&gt;</span> ☁️</div>
+                <div style="border: 1.5px solid #64748b; border-radius: 16px; padding: 3px 12px; font-size: 12px; font-weight: 800; color: #334155; letter-spacing: 0.3px;">
+                  UV ${uv_index}
+                </div>
+              </div>
+            </div>
+
+            <!-- Graphique 7 jours Taux de Redox -->
+            <div style="background: rgba(255,255,255,0.85); border-radius: 16px; padding: 12px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); backdrop-filter: blur(8px);">
+              <div style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">Taux de Redox(mV) sur les 7 derniers jours</div>
+              <div style="display: flex; justify-content: space-between; gap: 4px; text-align: center;">
+                <div style="flex: 1;"><div style="background: white; border-radius: 8px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">525 ↗</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">28/07</div></div>
+                <div style="flex: 1;"><div style="background: white; border-radius: 6px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">572 ↗</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">29/07</div></div>
+                <div style="flex: 1;"><div style="background: white; border-radius: 6px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">577 ↘</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">30/07</div></div>
+                <div style="flex: 1;"><div style="background: white; border-radius: 6px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">533 ↗</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">31/07</div></div>
+                <div style="flex: 1;"><div style="background: white; border-radius: 6px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">537 ↘</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">01/08</div></div>
+                <div style="flex: 1;"><div style="background: white; border-radius: 6px; padding: 3px 1px; font-size: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0;">516 ↘</div><div style="font-size: 9px; color: #94a3b8; margin-top: 3px; font-weight: 600;">02/08</div></div>
+                <div style="flex: 1;"><div style="background: #0284c7; color: white; border-radius: 8px; padding: 3px 1px; font-size: 10px; font-weight: 800; box-shadow: 0 2px 4px rgba(2,132,199,0.3);">${redox_val}</div><div style="font-size: 9px; color: #0284c7; font-weight: 800; margin-top: 3px;">03/08</div></div>
+              </div>
+            </div>
+
+            <!-- Carte Blanche "Dernière Mesure" -->
+            <div style="background: white; border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 14px rgba(0,0,0,0.05);">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="background: linear-gradient(135deg, #ff2d75 0%, #ff529a 100%); color: white; width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(255,45,117,0.35);">
+                  📡
+                </div>
+                <div>
+                  <div style="font-size: 14px; font-weight: 800; color: #0f172a;">Dernière Mesure</div>
+                  <div style="font-size: 12px; color: #64748b; font-weight: 500; margin-top: 1px;">${last_measure}</div>
+                </div>
+              </div>
+              
+              <div style="background: #f1f5f9; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #64748b; border: 1px solid #e2e8f0;">
+                ⚙️
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 3. SECTION BASSE CYAN-BLEU (Eau, Cadrans pH & Chlore, Bannière) -->
+          <div style="background: linear-gradient(175deg, #00d2b4 0%, #0091d2 45%, #162b50 100%); border-top-left-radius: 34px; border-top-right-radius: 34px; padding: 22px 20px 16px 20px; color: white; display: flex; flex-direction: column; gap: 16px; margin-top: 4px; box-shadow: inset 0 2px 12px rgba(255,255,255,0.25);">
+            
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 18px; font-weight: 500; opacity: 0.9;">eau</span>
+                <span style="font-size: 46px; font-weight: 800; text-shadow: 0 2px 10px rgba(0,0,0,0.15); letter-spacing: -1px;">${water_temp}°C</span>
+              </div>
+              <div style="background: rgba(255,255,255,0.22); backdrop-filter: blur(10px); border-radius: 12px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid rgba(255,255,255,0.3);">
+                🔗
+              </div>
+            </div>
+
+            <!-- CADRANS GAUGES (pH & CHLORE OPTIMISÉS) -->
+            <div style="display: flex; justify-content: space-around; align-items: center; margin: 4px 0 10px 0;">
+              
+              <!-- CADRAN pH -->
+              <div style="text-align: center; flex: 1;">
+                <div style="position: relative; width: 120px; height: 120px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                  <svg width="120" height="120" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+                    <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.25)" stroke-width="9" fill="none" />
+                    <circle cx="50" cy="50" r="42" stroke="#ffffff" stroke-width="9" stroke-dasharray="264" stroke-dashoffset="65" stroke-linecap="round" fill="none" />
+                  </svg>
+                  <div style="position: absolute; font-size: 28px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.2);">${ph_val}</div>
+                </div>
+                <div style="font-size: 14px; font-weight: 700; margin-top: 6px; opacity: 0.95;">pH</div>
+                <div style="display: inline-block; margin-top: 6px; padding: 5px 18px; border: 1.8px solid white; border-radius: 22px; font-size: 12px; font-weight: 800; background: rgba(255,255,255,0.18); backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  👍 ${ph_status}
+                </div>
+              </div>
+
+              <!-- CADRAN CHLORE / SPEEDOMETER AVEC VALEUR CENTRÉE & GRADUATIONS -->
+              <div style="text-align: center; flex: 1;">
+                <div style="position: relative; width: 120px; height: 120px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                  <svg width="120" height="120" viewBox="0 0 100 100">
+                    <!-- Arc de fond -->
+                    <path d="M 18 75 A 40 40 0 1 1 82 75" stroke="rgba(255,255,255,0.25)" stroke-width="8" fill="none" stroke-linecap="round" />
+                    <!-- Graduations blanches -->
+                    <path d="M 22 70 L 28 66 M 25 50 L 32 50 M 35 32 L 40 37 M 50 25 L 50 32 M 65 32 L 60 37 M 75 50 L 68 50 M 78 70 L 72 66" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" />
+                    <!-- Arc blanc actif -->
+                    <path d="M 18 75 A 40 40 0 0 1 76 30" stroke="#ffffff" stroke-width="8" fill="none" stroke-linecap="round" />
+                    <!-- Aiguille centrale élégante -->
+                    <line x1="50" y1="50" x2="68" y2="34" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" />
+                    <circle cx="50" cy="50" r="6" fill="#ffffff" />
+                  </svg>
+                  <!-- Valeur numérique du Chlore au centre -->
+                  <div style="position: absolute; font-size: 26px; font-weight: 800; text-shadow: 0 2px 6px rgba(0,0,0,0.3); text-align: center; bottom: 34px;">
+                    ${cl_val}<span style="font-size: 10px; font-weight: 600; opacity: 0.8; display: block; margin-top: -4px;">mg/L</span>
+                  </div>
+                </div>
+                <div style="font-size: 14px; font-weight: 700; margin-top: 6px; opacity: 0.95;">Chlore</div>
+                <div style="display: inline-block; margin-top: 6px; padding: 5px 18px; border: 1.8px solid white; border-radius: 22px; font-size: 12px; font-weight: 800; background: rgba(255,255,255,0.18); backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                  👍 ${cl_status}
+                </div>
+              </div>
+
+            </div>
+
+            <!-- BANNIERE DE RESUME -->
+            <div style="background: white; color: #0f172a; border-radius: 20px; padding: 14px 18px; text-align: center; font-size: 14px; font-weight: 800; box-shadow: 0 8px 20px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; gap: 10px;">
+              <span style="font-size: 16px;">❤️</span> ${water_state}
+            </div>
+
+            <!-- PIED DE PAGE -->
+            <div style="display: flex; justify-content: space-around; align-items: center; padding-top: 12px; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 11px; font-weight: 600; opacity: 0.95;">
+              <div style="text-align: center;">
+                <div style="font-size: 18px; margin-bottom: 2px;">〰️</div>
+                <div>Menu</div>
+              </div>
+              <div style="text-align: center; background: rgba(255,255,255,0.22); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                🐬
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 18px; margin-bottom: 2px;">🪣</div>
+                <div>Flipr Store</div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      `;
+    ]]]
