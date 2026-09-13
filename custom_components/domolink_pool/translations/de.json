@@ -1,0 +1,282 @@
+{
+  "config": {
+    "error": {
+      "invalid_auth_detailed": "DomoLink Pool Control-Fehler: {error_info}",
+      "cannot_connect": "Verbindung fehlgeschlagen: {error_info}",
+      "invalid_auth": "Ungültige Anmeldedaten"
+    },
+    "step": {
+      "user": {
+        "title": "DomoLink Pool Control Pool Konfiguration",
+        "description": "Geben Sie Ihre DomoLink Pool Control-Anmeldedaten ein. Die Poolabmessungen sind optional (lassen Sie 0, wenn unbekannt), werden aber für die Dosierungsberechnungen benötigt.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "domolink_pool_id": "Modul-ID (S/N)",
+          "pool_length": "Poollänge (m)",
+          "pool_width": "Poolbreite (m)",
+          "pool_depth": "Durchschnittliche Tiefe (m)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Poolabmessungen",
+        "description": "Geben Sie Ihre Poolabmessungen an, um die Behandlungsdosierungen (pH, Chlor) und die empfohlene Filtrationszeit zu berechnen. Bei 0 belassen, wenn nicht gewünscht.",
+        "data": {
+          "pool_length": "Länge (m)",
+          "pool_width": "Breite (m)",
+          "pool_depth": "Durchschnittliche Tiefe (m)"
+        }
+      }
+    }
+  },
+  "services": {
+    "force_cloud_sync": {
+      "name": "Force Cloud Sync",
+      "description": "Force the integration to immediately fetch the latest data from the DomoLink Pool Control Cloud API.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The target DomoLink Pool Control to synchronize."
+        }
+      }
+    },
+    "update_dimensions": {
+      "name": "Update dimensions",
+      "description": "Updates the pool dimensions used for treatment dose calculations.",
+      "fields": {
+        "device_id": {
+          "name": "DomoLink Pool Control Device",
+          "description": "The DomoLink Pool Control associated with the pool."
+        },
+        "length": {
+          "name": "Length (m)",
+          "description": "The length of the pool in meters."
+        },
+        "width": {
+          "name": "Width (m)",
+          "description": "The width of the pool in meters."
+        },
+        "depth": {
+          "name": "Average depth (m)",
+          "description": "The average depth in meters."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "version": {
+        "name": "Integrationsversion"
+      },
+      "temperature": {
+        "name": "Wassertemperatur"
+      },
+      "ph": {
+        "name": "pH"
+      },
+      "redox": {
+        "name": "Redox-Potential"
+      },
+      "chlorine": {
+        "name": "Desinfektionsmittel (Chlor)"
+      },
+      "conductivity": {
+        "name": "Leitfähigkeit"
+      },
+      "water_state": {
+        "name": "Wasserzustand"
+      },
+      "last_update": {
+        "name": "Letzte Messung"
+      },
+      "air_temp": {
+        "name": "Lufttemperatur"
+      },
+      "air_temp_next_hour": {
+        "name": "Lufttemperatur (+1h)"
+      },
+      "uv_index": {
+        "name": "UV-Index"
+      },
+      "cloud_cover": {
+        "name": "Bewölkung"
+      },
+      "weather_icon": {
+        "name": "Aktuelles Wetter"
+      },
+      "wind_speed": {
+        "name": "Windgeschwindigkeit"
+      },
+      "rain_probability": {
+        "name": "Regenwahrscheinlichkeit"
+      },
+      "air_temp_max_today": {
+        "name": "Max. Lufttemperatur (Heute)"
+      },
+      "air_temp_min_today": {
+        "name": "Min. Lufttemperatur (Heute)"
+      },
+      "water_temp_forecast_1h": {
+        "name": "Wassertemperatur-Prognose (+1h)"
+      },
+      "water_temp_forecast_tomorrow": {
+        "name": "Wassertemperatur-Prognose (Morgen)"
+      },
+      "ph_avg_yesterday": {
+        "name": "Durchschnitts-pH (Kürzlich)"
+      },
+      "redox_avg_yesterday": {
+        "name": "Durchschnitts-Redox (Kürzlich)"
+      },
+      "water_temp_avg_yesterday": {
+        "name": "Durchschnitts-Wassertemp (Kürzlich)"
+      },
+      "lsi": {
+        "name": "LSI-Index"
+      },
+      "lsi_status": {
+        "name": "Wasserstatus (LSI)"
+      },
+      "ph_equilibre": {
+        "name": "Gleichgewichts-pH"
+      },
+      "free_chlorine": {
+        "name": "Geschätztes freies Chlor"
+      },
+      "active_chlorine": {
+        "name": "Aktives Chlor (HOCl)"
+      },
+      "dose_ph_minus": {
+        "name": "pH- Dosis"
+      },
+      "dose_ph_plus": {
+        "name": "pH+ Dosis"
+      },
+      "dose_tac_plus": {
+        "name": "TAC+ Dosis (Bicarbonat)"
+      },
+      "dose_cl_maint": {
+        "name": "Chlordosis (Wartung)"
+      },
+      "dose_cl_shock": {
+        "name": "Chlordosis (Schock)"
+      },
+      "pump_hours": {
+        "name": "Filterdauer"
+      },
+      "conseil_filtration": {
+        "name": "Filterempfehlung"
+      },
+      "pool_volume": {
+        "name": "Poolvolumen"
+      },
+      "battery": {
+        "name": "Batteriestand"
+      },
+      "commercial_type": {
+        "name": "DomoLink Pool Control-Modell"
+      },
+      "firmware_version": {
+        "name": "Firmware-Version"
+      },
+      "last_alert": {
+        "name": "Letzte Warnung"
+      },
+      "data_source": {
+        "name": "Datenquelle"
+      },
+      "ble_rssi": {
+        "name": "BLE-Signal"
+      },
+      "ble_status": {
+        "name": "BLE-Status"
+      }
+    },
+    "binary_sensor": {
+      "ph_status": {
+        "name": "pH-Status"
+      },
+      "chlorine_status": {
+        "name": "Chlor-Status"
+      },
+      "need_calib": {
+        "name": "Sondenkalibrierung erforderlich"
+      },
+      "subscription_valid": {
+        "name": "DomoLink Pool Control-Abonnement"
+      }
+    },
+    "switch": {
+      "pump_filtration": {
+        "name": "Filterpumpe"
+      },
+      "ble_scan": {
+        "name": "BLE-Scanner"
+      }
+    },
+    "button": {
+      "force_refresh": {
+        "name": "Cloud-Aktualisierung erzwingen"
+      }
+    },
+    "select": {
+      "mode_filtration": {
+        "name": "Filtermodus",
+        "state": {
+          "auto": "Auto",
+          "manual": "Manuell",
+          "off": "Aus",
+          "planning": "Zeitplan"
+        }
+      }
+    },
+    "number": {
+      "target_ph": {
+        "name": "Ziel-pH"
+      },
+      "target_ph_min": {
+        "name": "Min-pH"
+      },
+      "target_ph_max": {
+        "name": "Max-pH"
+      },
+      "target_chlorine": {
+        "name": "Ziel-Chlor"
+      },
+      "target_chlorine_min": {
+        "name": "Min-Chlor"
+      },
+      "target_chlorine_max": {
+        "name": "Max-Chlor"
+      },
+      "pool_length": {
+        "name": "Poollänge"
+      },
+      "pool_width": {
+        "name": "Poolbreite"
+      },
+      "pool_depth": {
+        "name": "Durchschnittstiefe"
+      },
+      "pool_volume": {
+        "name": "Volumen"
+      },
+      "param_tac": {
+        "name": "Alkalinität (TAC)"
+      },
+      "param_th": {
+        "name": "Härte (TH)"
+      },
+      "param_cya": {
+        "name": "Stabilisator (CYA)"
+      },
+      "param_tds": {
+        "name": "Gelöste Stoffe (TDS)"
+      }
+    }
+  }
+}
