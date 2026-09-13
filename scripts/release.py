@@ -18,8 +18,8 @@ REPO_NAME = "Flipr_Pool"
 GITHUB_REPO = f"{REPO_OWNER}/{REPO_NAME}"
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-MANIFEST_PATH = os.path.join(ROOT_DIR, "custom_components", "flipr_pool", "manifest.json")
-CONST_PATH = os.path.join(ROOT_DIR, "custom_components", "flipr_pool", "const.py")
+MANIFEST_PATH = os.path.join(ROOT_DIR, "custom_components", "domolink_pool", "manifest.json")
+CONST_PATH = os.path.join(ROOT_DIR, "custom_components", "domolink_pool", "const.py")
 
 
 def get_token() -> str:
