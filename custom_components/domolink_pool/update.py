@@ -28,7 +28,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import DOMAIN
+from .const import DOMAIN, NAME, VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -202,7 +202,7 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
     def _update_sidebar_panel(self, update_available: bool) -> None:
         """Update the Home Assistant left sidebar panel badge/title if registered."""
         try:
-            title = "DomoLink Pool Control 🔴" if update_available else "DomoLink Pool Control"
+            title = f"{NAME} 🔴" if update_available else NAME
             icon = "mdi:shield-alert" if update_available else "mdi:pool"
             frontend.async_register_built_in_panel(
                 self.hass,
@@ -212,15 +212,15 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
                 frontend_url_path="domolink_pool",
                 config={
                     "_panel_custom": {
-                        "name": "domolink_pool-panel",
-                        "module_url": "/domolink_pool_panel/domolink_pool-panel.js",
+                        "name": "domolink-pool-panel",
+                        "module_url": f"/domolink_pool_panel/domolink_pool-panel.js?v={self._attr_installed_version or VERSION}",
                     }
                 },
                 require_admin=False,
                 update=True,
             )
         except Exception as err:
-            _LOGGER.debug("Could not update DomoLink Pool Control Pool sidebar panel registration: %s", err)
+            _LOGGER.debug("Could not update DomoLink Pool Control sidebar panel registration: %s", err)
 
     async def async_release_notes(self) -> str | None:
         """Return release notes in markdown."""

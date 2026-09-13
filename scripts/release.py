@@ -79,7 +79,7 @@ def create_github_release(new_ver: str, release_notes: str, token: str) -> None:
     payload = {
         "tag_name": tag,
         "target_commitish": "main",
-        "name": f"Restart HA {tag} (Latest)",
+        "name": f"DomoLink Pool Control {tag} (Latest)",
         "body": release_notes,
         "draft": False,
         "prerelease": False,
@@ -102,7 +102,7 @@ def create_github_release(new_ver: str, release_notes: str, token: str) -> None:
             "Authorization": f"token {token}",
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json",
-            "User-Agent": "Flipr_Pool-Releaser",
+            "User-Agent": "Domolink-Pool-Control-Releaser",
         },
         method="POST",
     )
@@ -121,7 +121,7 @@ def main() -> None:
     notes = (
         sys.argv[2]
         if len(sys.argv) > 2
-        else f"Release {new_ver}\n\n- Nouvelles améliorations et corrections pour Restart HA."
+        else f"Release {new_ver}\n\n- Nouvelles améliorations et corrections pour DomoLink Pool Control."
     )
     token = get_token()
 

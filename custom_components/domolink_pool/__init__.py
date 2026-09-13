@@ -2,16 +2,20 @@
 
 import logging
 from datetime import timedelta
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, callback, ServiceCall
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.components import frontend
-from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers.event import async_track_state_change_event
 import os
 import datetime
 
-from .const import DOMAIN, PLATFORMS
+try:
+    from homeassistant.components.http import StaticPathConfig
+except ImportError:
+    StaticPathConfig = None  # type: ignore[misc,assignment]
+
+from .const import DOMAIN, PLATFORMS, NAME, VERSION
 from .chemistry import compute_all_chemistry
 
 _LOGGER = logging.getLogger(__name__)
@@ -83,18 +87,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Enregistrer le panel frontend
-    panel_url = f"/domolink_pool_frontend/domolink_pool-panel.js"
+    # 1. Enregistrer le chemin statique pour le frontend
+    frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
+    if os.path.exists(frontend_dir):
+        if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:
+            try:
+                await hass.http.async_register_static_paths(
+                    [
+                        StaticPathConfig("/domolink_pool_panel", frontend_dir, cache_headers=False),
+                        StaticPathConfig("/domolink_pool_frontend", frontend_dir, cache_headers=False),
+                    ]
+                )
+            except Exception as e:
+                _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths async: %s", e)
+        elif hasattr(hass.http, "register_static_path"):
+            try:
+                hass.http.register_static_path(
+                    "/domolink_pool_panel",
+                    frontend_dir,
+                    cache_headers=False,
+                )
+                hass.http.register_static_path(
+                    "/domolink_pool_frontend",
+                    frontend_dir,
+                    cache_headers=False,
+                )
+            except Exception as e:
+                _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths: %s", e)
+
+    # 2. Enregistrer le panel frontend
+    panel_url = f"/domolink_pool_panel/domolink_pool-panel.js?v={VERSION}"
     try:
-        hass.http.register_static_path(
-            "/domolink_pool_frontend",
-            os.path.join(os.path.dirname(__file__), "frontend"),
-            cache_headers=False,
-        )
         frontend.async_register_built_in_panel(
             hass,
             component_name="custom",
-            sidebar_title="DomoLink Pool",
+            sidebar_title=NAME,
             sidebar_icon="mdi:pool",
             frontend_url_path="domolink_pool",
             config={
@@ -108,6 +135,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     except Exception as e:
         _LOGGER.debug("DomoLink Pool Control: Panel frontend déjà enregistré ou erreur: %s", e)
+
+    # 3. Service de rafraîchissement forcé
+    async def async_handle_force_sync(call: ServiceCall) -> None:
+        """Force refresh of coordinator data."""
+        for entry_data in hass.data.get(DOMAIN, {}).values():
+            coord = entry_data.get("coordinator")
+            if coord:
+                await coord.async_request_refresh()
+
+    if not hass.services.has_service(DOMAIN, "force_cloud_sync"):
+        hass.services.async_register(DOMAIN, "force_cloud_sync", async_handle_force_sync)
 
     # Listeners pour mettre à jour automatiquement dès qu'un capteur change
     @callback
