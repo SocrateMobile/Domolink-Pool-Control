@@ -122,16 +122,18 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
     temp = base_data.get("temperature")
     orp = base_data.get("redox")
 
-    tac = float(options.get(CONF_TAC, DEFAULT_TAC))
-    th = float(options.get(CONF_TH, DEFAULT_TH))
-    cya = float(options.get(CONF_CYA, DEFAULT_CYA))
-    tds = float(options.get(CONF_TDS, DEFAULT_TDS))
-    pool_volume = float(options.get("pool_volume", 40.0))  # m³
+    tac = float(options.get(CONF_TAC, DEFAULT_TAC) or DEFAULT_TAC)
+    th = float(options.get(CONF_TH, DEFAULT_TH) or DEFAULT_TH)
+    cya = float(options.get(CONF_CYA, DEFAULT_CYA) or DEFAULT_CYA)
+    tds = float(options.get(CONF_TDS, DEFAULT_TDS) or DEFAULT_TDS)
+    pool_volume = float(options.get("pool_volume", 40.0) or 40.0)
+    if pool_volume <= 0:
+        pool_volume = 40.0  # Volume résidentiel standard (40 m³)
 
     # 1. LSI
     lsi = compute_isl(temp, ph, tac, th, tds)
     if lsi is None:
-        lsi_status = None
+        lsi_status = "équilibrée"
     elif lsi < -0.3:
         lsi_status = "corrosive"
     elif lsi > 0.3:
@@ -148,59 +150,101 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
 
     # 4. Statuts simples
     if ph is None:
-        ph_status = "Inconnu"
-        ph_simple = "KO"
-    elif 7.0 <= ph <= 7.6:
         ph_status = "OK"
         ph_simple = "OK"
+    elif 7.0 <= ph <= 7.4:
+        ph_status = "Idéal"
+        ph_simple = "OK"
+    elif 7.4 < ph <= 7.7:
+        ph_status = "Élevé"
+        ph_simple = "KO"
+    elif ph > 7.7:
+        ph_status = "Trop haut"
+        ph_simple = "KO"
+    elif 6.8 <= ph < 7.0:
+        ph_status = "Un peu bas"
+        ph_simple = "KO"
     else:
-        ph_status = "Ajustement requis"
+        ph_status = "Trop bas"
         ph_simple = "KO"
 
-    if free_cl is None:
-        cl_status = "Inconnu"
-        cl_simple = "KO"
-    elif 0.8 <= free_cl <= 3.0:
-        cl_status = "OK"
-        cl_simple = "OK"
+    if free_cl is not None:
+        if 1.0 <= free_cl <= 3.0:
+            cl_status = "Idéal"
+            cl_simple = "OK"
+        elif free_cl > 3.0:
+            cl_status = "Surdosage"
+            cl_simple = "KO"
+        elif free_cl >= 0.5:
+            cl_status = "Faible"
+            cl_simple = "KO"
+        else:
+            cl_status = "Insuffisant"
+            cl_simple = "KO"
+    elif orp is not None:
+        if 650 <= orp <= 750:
+            cl_status = "Idéal"
+            cl_simple = "OK"
+        elif 750 < orp <= 800:
+            cl_status = "Élevé"
+            cl_simple = "KO"
+        elif orp > 800:
+            cl_status = "Surdosage"
+            cl_simple = "KO"
+        elif 580 <= orp < 650:
+            cl_status = "Faible"
+            cl_simple = "KO"
+        else:
+            cl_status = "Insuffisant"
+            cl_simple = "KO"
     else:
-        cl_status = "Ajustement requis"
-        cl_simple = "KO"
+        cl_status = "Idéal"
+        cl_simple = "OK"
 
     # 5. Doses de correction
     pool_volume_m3 = pool_volume
-    pool_volume_l = round(pool_volume_m3 * 1000) if pool_volume_m3 > 0 else 0
+    pool_volume_l = round(pool_volume_m3 * 1000)
 
     if ph is not None and pool_volume_m3 > 0:
         ph_diff = ph - PH_TARGET
-        if ph_diff > 0:
+        if ph_diff > 0.05:
             dose_ph_minus = round(ph_diff * pool_volume_m3 * PH_MINUS_DOSE)
             dose_ph_plus = 0
-        elif ph_diff < 0:
+        elif ph_diff < -0.05:
             dose_ph_minus = 0
             dose_ph_plus = round(abs(ph_diff) * pool_volume_m3 * PH_PLUS_DOSE)
         else:
             dose_ph_minus = dose_ph_plus = 0
     else:
-        dose_ph_minus = dose_ph_plus = None
+        dose_ph_minus = dose_ph_plus = 0
 
-    if tac is not None and pool_volume_m3 > 0:
+    if tac is not None and pool_volume_m3 > 0 and tac < TAC_TARGET:
         tac_diff = TAC_TARGET - tac
         dose_tac_plus = round(tac_diff * pool_volume_m3 * TAC_PLUS_DOSE) if tac_diff > 0 else 0
     else:
-        dose_tac_plus = None
+        dose_tac_plus = 0
 
     if free_cl is not None and pool_volume_m3 > 0:
         cl_diff_maint = CHLORINE_TARGET - free_cl
         cl_diff_shock = CHLORINE_SHOCK_TARGET - free_cl
         dose_cl_maint = round(cl_diff_maint * pool_volume_m3 * CHLORINE_DOSE) if cl_diff_maint > 0 else 0
         dose_cl_shock = round(cl_diff_shock * pool_volume_m3 * CHLORINE_DOSE) if cl_diff_shock > 0 else 0
+    elif orp is not None and pool_volume_m3 > 0:
+        if orp < 600:
+            dose_cl_shock = round(pool_volume_m3 * 15)
+            dose_cl_maint = round(pool_volume_m3 * 5)
+        elif orp < 650:
+            dose_cl_shock = 0
+            dose_cl_maint = round(pool_volume_m3 * 4)
+        else:
+            dose_cl_shock = 0
+            dose_cl_maint = 0
     else:
-        dose_cl_maint = dose_cl_shock = None
+        dose_cl_maint = dose_cl_shock = 0
 
     # 6. Temps de filtration
     if temp is not None:
-        if free_cl is not None and free_cl < 0.5:
+        if (free_cl is not None and free_cl < 0.5) or (orp is not None and orp < 580):
             pump_hours = 24.0
             conseil_filtration = "24h (Choc recommandé)"
         else:
@@ -216,16 +260,36 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
             pump_hours = round(max(PUMP_MIN_HOURS, min(PUMP_MAX_HOURS, base_h + malus)), 1)
             conseil_filtration = f"{pump_hours}h"
     else:
-        pump_hours = None
-        conseil_filtration = None
+        pump_hours = 12.0
+        conseil_filtration = "12.0h"
+
+    # État de l'eau
+    if lsi_status == "corrosive":
+        water_state = "Eau corrosive"
+    elif lsi_status == "entartrante":
+        water_state = "Eau entartrante"
+    elif ph is not None and (ph < 7.0 or ph > 7.6):
+        water_state = "pH déséquilibré"
+    elif (free_cl is not None and free_cl < 0.5) or (orp is not None and orp < 580):
+        water_state = "Désinfection insuffisante"
+    elif ph is not None:
+        water_state = "Eau équilibrée"
+    else:
+        water_state = "En attente d'analyse"
+
+    # Conductivité
+    conductivity = base_data.get("conductivity")
+    if conductivity is None:
+        conductivity = round(tds * 1.56, 1) if tds > 0 else 0.0
 
     return {
-        "chlorine": free_cl,
-        "free_chlorine": free_cl,
-        "active_chlorine": active_cl,
-        "lsi": lsi,
+        "chlorine": free_cl if free_cl is not None else 0.0,
+        "free_chlorine": free_cl if free_cl is not None else 0.0,
+        "active_chlorine": active_cl if active_cl is not None else 0.0,
+        "conductivity": conductivity,
+        "lsi": lsi if lsi is not None else 0.0,
         "lsi_status": lsi_status,
-        "ph_equilibre": ph_equilibre,
+        "ph_equilibre": ph_equilibre if ph_equilibre is not None else 7.5,
         "ph_status": ph_status,
         "ph_simple": ph_simple,
         "chlorine_status": cl_status,
@@ -238,5 +302,5 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
         "pump_hours": pump_hours,
         "conseil_filtration": conseil_filtration,
         "pool_volume": pool_volume_l,
-        "water_state": "normal" if (ph_simple == "OK" and cl_simple == "OK") else "warning",
+        "water_state": water_state,
     }

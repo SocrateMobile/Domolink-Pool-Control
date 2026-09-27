@@ -1,15 +1,4 @@
-# ==============================================================================
-# CARTE LOVELACE "FLIPR OFFICIAL APP UI" - VUE ANALYSE
-# ==============================================================================
-# Carte personnalisée imitant l'application officielle DomoLink Pool Control (Vue Analyse)
-# Prérequis : custom:button-card (via HACS)
-# ==============================================================================
-
 type: custom:button-card
-show_name: false
-show_icon: false
-show_state: false
-styles:
   card:
     - padding: 0px
     - margin: 0px
@@ -28,18 +17,86 @@ styles:
 custom_fields:
   app_container: |
     [[[
-      // Détection automatique du préfixe des entités DomoLink Pool Control (ex: "sensor.jardin_domolink_pool_piscine")
-      const ph_entity_name = Object.keys(states).find(e => e.startsWith('sensor.') && e.includes('domolink_pool') && e.endsWith('_ph'));
-      const prefix = ph_entity_name ? ph_entity_name.replace('_ph', '') : 'sensor.domolink_pool';
+      // Détection automatique du préfixe des entités Flipr (ex: "sensor.jardin_flipr_piscine")
+      const ph_entity_name = Object.keys(states).find(e => e.startsWith('sensor.') && (e.includes('domolink') || e.includes('flipr') || e.includes('pool') || e.includes('piscine')) && e.endsWith('_ph'));
+      const prefix = ph_entity_name ? ph_entity_name.replace('_ph', '') : (Object.keys(states).find(e => e.startsWith('sensor.domolink_pool')) ? 'sensor.domolink_pool_piscine' : 'sensor.flipr');
+      let pool_name = 'Piscine';
+      if (ph_entity_name && states[ph_entity_name]?.attributes?.friendly_name) {
+        pool_name = states[ph_entity_name].attributes.friendly_name.replace(/\s*(pH|Température.*|Temperature.*|Redox.*|Chlore.*|Batterie.*)$/i, '').trim() || 'Piscine';
+      }
 
-      const air_temp = states[`${prefix}_temperature_air`] ? states[`${prefix}_temperature_air`].state : '36';
+      const air_temp = states[`${prefix}_temperature_de_l_air`] ? states[`${prefix}_temperature_de_l_air`].state : '36';
       const uv_index = states[`${prefix}_indice_uv`] ? states[`${prefix}_indice_uv`].state : '0';
-      const water_temp = states[`${prefix}_temperature_eau`] ? states[`${prefix}_temperature_eau`].state : '29';
+      const water_temp = states[`${prefix}_temperature_de_l_eau`] ? states[`${prefix}_temperature_de_l_eau`].state : '29';
       const ph_val = states[`${prefix}_ph`] ? states[`${prefix}_ph`].state : '7.1';
-      const ph_status = states[`${prefix}_statut_ph`] ? states[`${prefix}_statut_ph`].state : 'Parfait';
-      const cl_status = states[`${prefix}_statut_chlore`] ? states[`${prefix}_statut_chlore`].state : 'Parfait';
-      const last_measure = states[`${prefix}_derniere_mesure`] ? states[`${prefix}_derniere_mesure`].state : 'mar. 04/08 01:20';
-      const redox_val = states[`${prefix}_redox`] ? states[`${prefix}_redox`].state : '545';
+      const redox_val = states[`${prefix}_redox`] ? states[`${prefix}_redox`].state : (states[`${prefix}_potentiel_redox`] ? states[`${prefix}_potentiel_redox`].state : '545');
+      const ph_num = parseFloat(ph_val);
+      let ph_status = "Idéal";
+      let ph_icon = "👍";
+      let ph_border = "#10b981";
+      if (isNaN(ph_num)) {
+        ph_status = "En attente";
+        ph_icon = "⏳";
+        ph_border = "white";
+      } else if (ph_num >= 7.0 && ph_num <= 7.4) {
+        ph_status = "Idéal";
+        ph_icon = "👍";
+        ph_border = "#10b981";
+      } else if (ph_num > 7.4 && ph_num <= 7.7) {
+        ph_status = "Élevé";
+        ph_icon = "⚠️";
+        ph_border = "#f59e0b";
+      } else if (ph_num > 7.7) {
+        ph_status = "Trop haut";
+        ph_icon = "🚨";
+        ph_border = "#ef4444";
+      } else if (ph_num >= 6.8 && ph_num < 7.0) {
+        ph_status = "Un peu bas";
+        ph_icon = "⚠️";
+        ph_border = "#f59e0b";
+      } else {
+        ph_status = "Trop bas";
+        ph_icon = "🚨";
+        ph_border = "#ef4444";
+      }
+
+      const rx_num = parseFloat(redox_val);
+      let cl_status = "Idéal";
+      let cl_icon = "👍";
+      let cl_border = "#10b981";
+      if (isNaN(rx_num)) {
+        cl_status = "En attente";
+        cl_icon = "⏳";
+        cl_border = "white";
+      } else if (rx_num >= 650 && rx_num <= 750) {
+        cl_status = "Idéal";
+        cl_icon = "👍";
+        cl_border = "#10b981";
+      } else if (rx_num > 750 && rx_num <= 800) {
+        cl_status = "Élevé";
+        cl_icon = "⚠️";
+        cl_border = "#f59e0b";
+      } else if (rx_num > 800) {
+        cl_status = "Surdosage";
+        cl_icon = "🚨";
+        cl_border = "#ef4444";
+      } else if (rx_num >= 580 && rx_num < 650) {
+        cl_status = "Faible";
+        cl_icon = "⚠️";
+        cl_border = "#f59e0b";
+      } else {
+        cl_status = "Insuffisant";
+        cl_icon = "🚨";
+        cl_border = "#ef4444";
+      }
+      const raw_last_measure = states[`${prefix}_derniere_mesure`] ? states[`${prefix}_derniere_mesure`].state : (states[`${prefix}_last_update`] ? states[`${prefix}_last_update`].state : '');
+      let last_measure = raw_last_measure || "Aujourd'hui";
+      const match_date = String(raw_last_measure).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+      if (match_date) {
+        const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        const mIdx = parseInt(match_date[2], 10) - 1;
+        last_measure = `${parseInt(match_date[3], 10)} ${months[mIdx] || match_date[2]} ${match_date[1]} à ${match_date[4]}H${match_date[5]}`;
+      }
       
       const pump_entity = Object.keys(states).find(e => e.startsWith('switch.') && (e.includes('pompe_filtration') || e.includes('pump_filtration')));
       const pump_state = (pump_entity && states[pump_entity]) ? states[pump_entity].state : 'off';
@@ -48,10 +105,10 @@ custom_fields:
       const pump_shadow = (pump_state === 'on') ? 'box-shadow: 0 2px 10px rgba(34,197,94,0.4);' : '';
       
       const advice_filtration = states[`${prefix}_conseil_filtration`] ? states[`${prefix}_conseil_filtration`].state : 'Filtrer 14h / jour';
-      const ph_minus = parseFloat(states[`${prefix}_dose_ph_minus`] ? states[`${prefix}_dose_ph_minus`].state : '0') || 0;
-      const ph_plus = parseFloat(states[`${prefix}_dose_ph_plus`] ? states[`${prefix}_dose_ph_plus`].state : '0') || 0;
-      const cl_shock = parseFloat(states[`${prefix}_dose_cl_shock`] ? states[`${prefix}_dose_cl_shock`].state : '0') || 0;
-      const cl_maint = parseFloat(states[`${prefix}_dose_cl_maint`] ? states[`${prefix}_dose_cl_maint`].state : '0') || 0;
+      const ph_minus = parseFloat(states[`${prefix}_dose_ph`] ? states[`${prefix}_dose_ph`].state : '0') || 0;
+      const ph_plus = parseFloat(states[`${prefix}_dose_ph_2`] ? states[`${prefix}_dose_ph_2`].state : '0') || 0;
+      const cl_shock = parseFloat(states[`${prefix}_dose_chlore_choc`] ? states[`${prefix}_dose_chlore_choc`].state : '0') || 0;
+      const cl_maint = parseFloat(states[`${prefix}_dose_chlore_entretien`] ? states[`${prefix}_dose_chlore_entretien`].state : '0') || 0;
 
       // Calcul des positions pour le curseur (Knob)
       // pH: min 6.4, max 8.0, optimal 7.1-7.4
@@ -76,7 +133,7 @@ custom_fields:
           <!-- EN-TÊTE & SELECTIONS -->
           <div style="padding: 16px 18px 8px 18px; text-align: center;">
             <div style="font-size: 15px; font-weight: 500; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-              Rochegude - Rochegude <span style="font-size: 10px; color: #64748b;">▼</span>
+              ${pool_name} <span style="font-size: 10px; color: #64748b;">▼</span>
             </div>
             
             <div style="display: flex; background: #94a3b8; border-radius: 14px; padding: 2px; width: 100%; box-sizing: border-box;">
@@ -240,8 +297,8 @@ custom_fields:
                   <div style="position: absolute; font-size: 26px; font-weight: 600;">${ph_val}</div>
                 </div>
                 <div style="font-size: 14px; font-weight: 500; margin-top: 10px; opacity: 0.9;">pH</div>
-                <div style="display: inline-block; margin-top: 10px; padding: 6px 16px; border: 1.5px solid white; border-radius: 20px; font-size: 12px; font-weight: 600; background: transparent; white-space: nowrap;">
-                  👍 ${ph_status}
+                <div style="display: inline-block; margin-top: 10px; padding: 6px 16px; border: 1.5px solid ${ph_border}; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(0,0,0,0.15); white-space: nowrap;">
+                  ${ph_icon} ${ph_status}
                 </div>
               </div>
 
@@ -267,8 +324,8 @@ custom_fields:
                   <div style="position: absolute; font-size: 22px; font-weight: 600;">${redox_val}</div>
                 </div>
                 <div style="font-size: 14px; font-weight: 500; margin-top: 10px; opacity: 0.9;">Chlore</div>
-                <div style="display: inline-block; margin-top: 10px; padding: 6px 16px; border: 1.5px solid white; border-radius: 20px; font-size: 12px; font-weight: 600; background: transparent; white-space: nowrap;">
-                  👍 ${cl_status}
+                <div style="display: inline-block; margin-top: 10px; padding: 6px 16px; border: 1.5px solid ${cl_border}; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(0,0,0,0.15); white-space: nowrap;">
+                  ${cl_icon} ${cl_status}
                 </div>
               </div>
 
@@ -294,7 +351,7 @@ custom_fields:
               </div>
               <div style="text-align: center;">
                 <div style="font-size: 20px; margin-bottom: 2px; opacity: 0.9;">🪣</div>
-                <div style="opacity: 0.9;">DomoLink Pool Control Store</div>
+                <div style="opacity: 0.9;">Flipr Store</div>
               </div>
             </div>
 
@@ -303,3 +360,10 @@ custom_fields:
         </div>
       `;
     ]]]
+# ==============================================================================
+# CARTE LOVELACE "FLIPR OFFICIAL APP UI" - VUE CONTRÔLE
+# ==============================================================================
+# Carte personnalisée imitant l'application officielle Flipr (Vue Contrôle)
+# Prérequis : custom:button-card (via HACS)
+# ==============================================================================
+

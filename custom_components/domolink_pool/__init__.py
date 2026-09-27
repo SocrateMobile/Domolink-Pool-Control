@@ -38,11 +38,14 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
         options = self.entry.options
 
         # Fetch entities
-        ph_ent = self.hass.states.get(data.get("ph_entity", ""))
-        water_ent = self.hass.states.get(data.get("water_temp_entity", ""))
-        orp_ent = self.hass.states.get(data.get("orp_entity", ""))
-        air_ent = self.hass.states.get(data.get("air_temp_entity", ""))
-        uv_ent = self.hass.states.get(data.get("uv_entity", ""))
+        opts = {**self.entry.data, **self.entry.options}
+        ph_ent = self.hass.states.get(opts.get("ph_entity", ""))
+        water_ent = self.hass.states.get(opts.get("water_temp_entity", ""))
+        orp_ent = self.hass.states.get(opts.get("orp_entity", ""))
+        cond_ent = self.hass.states.get(opts.get("conductivity_entity", ""))
+        air_ent = self.hass.states.get(opts.get("air_temp_entity", ""))
+        uv_ent = self.hass.states.get(opts.get("uv_entity", ""))
+        pump_ent_id = opts.get("pump_entity", "")
 
         def safe_float(state):
             try:
@@ -53,6 +56,7 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
         ph = safe_float(ph_ent)
         water_temp = safe_float(water_ent)
         orp = safe_float(orp_ent)
+        cond = safe_float(cond_ent)
         air_temp = safe_float(air_ent)
         uv = safe_float(uv_ent)
 
@@ -60,8 +64,10 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
             "ph": ph,
             "temperature": water_temp,
             "redox": orp,
+            "conductivity": cond,
             "air_temp": air_temp,
             "uv_index": uv,
+            "pump_entity": pump_ent_id,
             "last_update": datetime.datetime.now().isoformat()
         }
 
@@ -152,12 +158,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     def _async_state_changed(event):
         hass.async_create_task(coordinator.async_request_refresh())
 
+    opts = {**entry.data, **entry.options}
     entities_to_track = [
-        entry.data.get("ph_entity"),
-        entry.data.get("water_temp_entity"),
-        entry.data.get("orp_entity"),
-        entry.data.get("air_temp_entity"),
-        entry.data.get("uv_entity"),
+        opts.get("ph_entity"),
+        opts.get("water_temp_entity"),
+        opts.get("orp_entity"),
+        opts.get("conductivity_entity"),
+        opts.get("pump_entity"),
+        opts.get("air_temp_entity"),
+        opts.get("uv_entity"),
     ]
     entities_to_track = [e for e in entities_to_track if e]
     if entities_to_track:
