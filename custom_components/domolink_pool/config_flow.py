@@ -31,6 +31,8 @@ class DomolinkPoolConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("ph_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Required("water_temp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Optional("orp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("conductivity_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("pump_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
             vol.Optional("air_temp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Optional("uv_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
         })
@@ -49,7 +51,7 @@ class DomolinkPoolConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class DomolinkPoolOptionsFlowHandler(config_entries.OptionsFlow):
-    """Options de chimie de l'eau."""
+    """Options de chimie de l'eau et configuration."""
 
     def __init__(self, config_entry):
         self.config_entry = config_entry
@@ -58,8 +60,9 @@ class DomolinkPoolOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        opt = self.config_entry.options
+        opt = {**self.config_entry.data, **self.config_entry.options}
         schema = vol.Schema({
+            vol.Optional("pump_entity", description={"suggested_value": opt.get("pump_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
             vol.Optional(CONF_TAC, default=opt.get(CONF_TAC, DEFAULT_TAC)): int,
             vol.Optional(CONF_TH, default=opt.get(CONF_TH, DEFAULT_TH)): int,
             vol.Optional(CONF_CYA, default=opt.get(CONF_CYA, DEFAULT_CYA)): int,

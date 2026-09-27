@@ -544,20 +544,45 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         }
 
         .status-pill-badge {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
           margin-top: 8px;
-          padding: 5px 14px;
-          border: 1.5px solid white;
+          padding: 4px 14px;
+          border: 1.5px solid rgba(255, 255, 255, 0.4);
           border-radius: 20px;
           font-size: 12px;
           font-weight: 700;
-          background: transparent;
+          background: rgba(255, 255, 255, 0.15);
+          color: white;
           white-space: nowrap;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .status-pill-badge.alert {
-          background: rgba(239, 68, 68, 0.3);
+        .status-pill-badge.pill-ok {
+          background: rgba(16, 185, 129, 0.3);
+          border-color: #6ee7b7;
+          color: #ffffff;
+        }
+
+        .status-pill-badge.pill-warn {
+          background: rgba(245, 158, 11, 0.35);
+          border-color: #fcd34d;
+          color: #ffffff;
+        }
+
+        .status-pill-badge.pill-danger {
+          background: rgba(239, 68, 68, 0.4);
           border-color: #fca5a5;
+          color: #ffffff;
+        }
+
+        .status-pill-badge.pill-wait {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.35);
+          color: #e2e8f0;
         }
 
         .card-footer-nav {
@@ -821,10 +846,85 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       return k && states[k] ? states[k].state : null;
     };
 
-    const pump_entity_key = Object.keys(states).find(
-      (e) => e.startsWith("switch.") && (e.includes("pompe_filtration") || e.includes("pump_filtration") || e.includes("domolink_pool_hub"))
+    // Pompe de filtration : switch configuré dans l'intégration ou détection automatique
+    const configured_pump = (domolink_keys.find(e => e.endsWith("_pump_entity")) && states[domolink_keys.find(e => e.endsWith("_pump_entity"))]?.state) || null;
+    const pump_entity_key = (configured_pump && states[configured_pump]) ? configured_pump : Object.keys(states).find(
+      (e) => e.startsWith("switch.") && !e.includes("scanner") && !e.includes("ble") && (
+        e.includes("pompe_filtration") || e.includes("pump_filtration") || e.includes("pompe") || e.includes("pump") || e.includes("filtration") || e.includes("domolink_pool_hub")
+      )
+    ) || Object.keys(states).find(
+      (e) => e.startsWith("switch.") && !e.includes("scanner") && !e.includes("ble") && (
+        (prefix && e.startsWith(prefix.replace("sensor.", "switch.")))
+      )
     );
     const pump_state = pump_entity_key && states[pump_entity_key] ? states[pump_entity_key].state : "off";
+
+    const ph_val = getVal("ph", "7.2");
+    const redox_val = getVal(["potentiel_redox", "redox"], "650");
+
+    // Calcul contextuel dynamique du badge pH
+    const ph_num = parseFloat(ph_val);
+    let ph_status = "Idéal";
+    let ph_badge_icon = "👍";
+    let ph_badge_class = "pill-ok";
+
+    if (isNaN(ph_num)) {
+      ph_status = "En attente";
+      ph_badge_icon = "⏳";
+      ph_badge_class = "pill-wait";
+    } else if (ph_num >= 7.0 && ph_num <= 7.4) {
+      ph_status = "Idéal";
+      ph_badge_icon = "👍";
+      ph_badge_class = "pill-ok";
+    } else if (ph_num > 7.4 && ph_num <= 7.7) {
+      ph_status = "Élevé";
+      ph_badge_icon = "⚠️";
+      ph_badge_class = "pill-warn";
+    } else if (ph_num > 7.7) {
+      ph_status = "Trop haut";
+      ph_badge_icon = "🚨";
+      ph_badge_class = "pill-danger";
+    } else if (ph_num >= 6.8 && ph_num < 7.0) {
+      ph_status = "Un peu bas";
+      ph_badge_icon = "⚠️";
+      ph_badge_class = "pill-warn";
+    } else {
+      ph_status = "Trop bas";
+      ph_badge_icon = "🚨";
+      ph_badge_class = "pill-danger";
+    }
+
+    // Calcul contextuel dynamique du badge Chlore / Redox
+    const rx_num = parseFloat(redox_val);
+    let cl_status = "Idéal";
+    let cl_badge_icon = "👍";
+    let cl_badge_class = "pill-ok";
+
+    if (isNaN(rx_num)) {
+      cl_status = "En attente";
+      cl_badge_icon = "⏳";
+      cl_badge_class = "pill-wait";
+    } else if (rx_num >= 650 && rx_num <= 750) {
+      cl_status = "Idéal";
+      cl_badge_icon = "👍";
+      cl_badge_class = "pill-ok";
+    } else if (rx_num > 750 && rx_num <= 800) {
+      cl_status = "Élevé";
+      cl_badge_icon = "⚠️";
+      cl_badge_class = "pill-warn";
+    } else if (rx_num > 800) {
+      cl_status = "Surdosage";
+      cl_badge_icon = "🚨";
+      cl_badge_class = "pill-danger";
+    } else if (rx_num >= 580 && rx_num < 650) {
+      cl_status = "Faible";
+      cl_badge_icon = "⚠️";
+      cl_badge_class = "pill-warn";
+    } else {
+      cl_status = "Insuffisant";
+      cl_badge_icon = "🚨";
+      cl_badge_class = "pill-danger";
+    }
 
     return {
       prefix,
@@ -833,10 +933,14 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       air_temp: getVal(["temperature_de_l_air", "air_temp", "air_temperature"], "32"),
       uv_index: getVal(["indice_uv", "uv_index"], "0"),
       water_temp: getVal(["temperature_de_l_eau", "temperature", "water_temp", "water_temperature"], "28"),
-      ph_val: getVal("ph", "7.2"),
-      ph_status: getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_statut_ph") || k.endsWith("_ph_status"))) || "Parfait",
-      redox_val: getVal(["potentiel_redox", "redox"], "650"),
-      cl_status: getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_statut_chlore") || k.endsWith("_chlorine_status"))) || "Parfait",
+      ph_val,
+      ph_status,
+      ph_badge_icon,
+      ph_badge_class,
+      redox_val,
+      cl_status,
+      cl_badge_icon,
+      cl_badge_class,
       last_measure: getVal(["derniere_mesure", "last_update", "last_measurement"], "Aujourd'hui"),
       advice_filtration: getVal(["conseil_filtration", "filtration_advice", "pump_hours"], "Filtrer 12h / jour"),
       ph_minus_dose: parseFloat(getVal(["dose_ph", "dose_ph_minus", "ph_minus_dose"], "0")) || 0,
@@ -1062,7 +1166,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
               <div class="gauge-center-text">${d.ph_val}</div>
             </div>
             <div style="font-size: 14px; font-weight: 600; margin-top: 6px;">pH</div>
-            <div class="status-pill-badge">👍 ${d.ph_status}</div>
+            <div class="status-pill-badge ${d.ph_badge_class}">${d.ph_badge_icon} ${d.ph_status}</div>
           </div>
 
           <!-- JAUGE CHLORE / REDOX -->
@@ -1082,7 +1186,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
               <div class="gauge-center-text">${d.redox_val}</div>
             </div>
             <div style="font-size: 14px; font-weight: 600; margin-top: 6px;">Chlore</div>
-            <div class="status-pill-badge">👍 ${d.cl_status}</div>
+            <div class="status-pill-badge ${d.cl_badge_class}">${d.cl_badge_icon} ${d.cl_status}</div>
           </div>
         </div>
 
@@ -1411,13 +1515,21 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       });
     }
 
-    if (btnPump && d.pump_entity_key && this._hass) {
-      btnPump.addEventListener("click", () => {
-        this._hass.callService("homeassistant", "toggle", {
-          entity_id: d.pump_entity_key,
-        });
+    // Tous les boutons Marche/Arrêt de la pompe
+    const btnPumps = cardEl.querySelectorAll("#btn-toggle-pump");
+    btnPumps.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (d.pump_entity_key && this._hass) {
+          const isCurrentlyOn = btn.classList.contains("pump-on");
+          btn.classList.toggle("pump-on", !isCurrentlyOn);
+          btn.classList.toggle("pump-off", isCurrentlyOn);
+          this._hass.callService("homeassistant", "toggle", {
+            entity_id: d.pump_entity_key,
+          });
+        }
       });
-    }
+    });
   }
 }
 
