@@ -3,7 +3,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "domolink_pool"
 NAME = "DomoLink Pool Control"
-VERSION = "1.0.6"
+VERSION = "1.0.7"
 
 PLATFORMS = [
     Platform.SENSOR,
