@@ -124,6 +124,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 2. Enregistrer le panel frontend
     panel_url = f"/domolink_pool_panel/domolink_pool-panel.js?v={VERSION}"
     try:
+        if hasattr(frontend, "add_extra_js_url"):
+            frontend.add_extra_js_url(hass, panel_url)
+
         frontend.async_register_built_in_panel(
             hass,
             component_name="custom",

@@ -7,13 +7,9 @@
 class DomoLinkPoolControlPanel extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: "open" });
     this._view = "analyse"; // "analyse" ou "controle"
     this._initialized = false;
-    this.style.display = "block";
-    this.style.height = "100%";
-    this.style.minHeight = "100vh";
-    this.style.overflowY = "auto";
-    this.style.boxSizing = "border-box";
   }
 
   set panel(panel) {
@@ -21,9 +17,11 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    if (this._hass && !this._initialized) {
+    if (!this._initialized) {
       this._initialized = true;
       this._renderLayout();
+    }
+    if (this._hass) {
       this._updateData();
     }
 
@@ -150,7 +148,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   }
 
   _renderLayout() {
-    this.innerHTML = `
+    this.shadowRoot.innerHTML = `
       <style>
         :host, domolink-pool-panel, domolink_pool-panel {
           background-color: var(--primary-background-color, #f8fafc);
@@ -803,13 +801,13 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       </div>
     `;
 
-    this.querySelector("#btn-force-sync").addEventListener("click", () => {
+    this.shadowRoot.querySelector("#btn-force-sync")?.addEventListener("click", () => {
       if (this._hass) {
         this._hass.callService("domolink_pool", "force_cloud_sync", {});
       }
     });
 
-    const poolTitle = this.querySelector(".domolink_pool-title");
+    const poolTitle = this.shadowRoot.querySelector(".domolink_pool-title");
     if (poolTitle) {
       poolTitle.style.cursor = "pointer";
       let titleClicks = [];
@@ -819,7 +817,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         titleClicks.push(now);
         if (titleClicks.length >= 3) {
           titleClicks = [];
-          launchSocrateRulesEasterEgg(this);
+          launchSocrateRulesEasterEgg(this.shadowRoot);
         }
       });
     }
@@ -1004,9 +1002,9 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   _updateData() {
     try {
       const d = this._extractData();
-      const cardEl = this.querySelector("#domolink_pool-card-content");
-      const adviceEl = this.querySelector("#advice-content");
-      const syncTimeEl = this.querySelector("#last-sync-time");
+      const cardEl = this.shadowRoot?.querySelector("#domolink_pool-card-content");
+      const adviceEl = this.shadowRoot?.querySelector("#advice-content");
+      const syncTimeEl = this.shadowRoot?.querySelector("#last-sync-time");
 
       if (syncTimeEl) {
         const formattedDate = this._formatDate(d.last_measure);
