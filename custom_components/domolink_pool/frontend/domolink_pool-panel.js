@@ -9,6 +9,11 @@ class DomoLinkPoolControlPanel extends HTMLElement {
     super();
     this._view = "analyse"; // "analyse" ou "controle"
     this._initialized = false;
+    this.style.display = "block";
+    this.style.height = "100%";
+    this.style.minHeight = "100vh";
+    this.style.overflowY = "auto";
+    this.style.boxSizing = "border-box";
   }
 
   set panel(panel) {
@@ -147,7 +152,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   _renderLayout() {
     this.innerHTML = `
       <style>
-        :host {
+        :host, domolink-pool-panel, domolink_pool-panel {
           background-color: var(--primary-background-color, #f8fafc);
           color: var(--primary-text-color, #1e293b);
           display: block;
@@ -847,6 +852,8 @@ class DomoLinkPoolControlPanel extends HTMLElement {
     };
 
     // Pompe de filtration : switch configuré dans l'intégration ou détection automatique
+    const all_keys = Object.keys(states);
+    const domolink_keys = all_keys.filter((e) => e.includes("domolink_pool"));
     const configured_pump = (domolink_keys.find(e => e.endsWith("_pump_entity")) && states[domolink_keys.find(e => e.endsWith("_pump_entity"))]?.state) || null;
     const pump_entity_key = (configured_pump && states[configured_pump]) ? configured_pump : Object.keys(states).find(
       (e) => e.startsWith("switch.") && !e.includes("scanner") && !e.includes("ble") && (
@@ -942,17 +949,17 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       cl_badge_icon,
       cl_badge_class,
       last_measure: getVal(["derniere_mesure", "last_update", "last_measurement"], "Aujourd'hui"),
-      advice_filtration: getVal(["conseil_filtration", "filtration_advice", "pump_hours"], "Filtrer 12h / jour"),
-      ph_minus_dose: parseFloat(getVal(["dose_ph", "dose_ph_minus", "ph_minus_dose"], "0")) || 0,
-      ph_plus_dose: parseFloat(getVal(["dose_ph_2", "dose_ph_plus", "ph_plus_dose"], "0")) || 0,
+      advice_filtration: getVal(["conseil_de_filtration", "conseil_filtration", "temps_de_filtration_recommande", "filtration_advice", "pump_hours"], "Filtrer 12h / jour"),
+      ph_minus_dose: parseFloat(getVal(["dose_ph_moins", "dose_ph", "dose_ph_minus", "ph_minus_dose"], "0")) || 0,
+      ph_plus_dose: parseFloat(getVal(["dose_ph_plus", "dose_ph_2", "ph_plus_dose"], "0")) || 0,
       cl_shock_dose: parseFloat(getVal(["dose_chlore_choc", "dose_cl_shock", "cl_shock_dose"], "0")) || 0,
       cl_maint_dose: parseFloat(getVal(["dose_chlore_entretien", "dose_cl_maint", "cl_maint_dose"], "0")) || 0,
-      lsi_val: parseFloat(getVal(["isl", "lsi", "indice_lsi"], "0.0")) || 0.0,
-      lsi_status: getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_statut_isl") || k.endsWith("_statut_lsi") || k.endsWith("_lsi_status"))) || "Eau équilibrée",
+      lsi_val: parseFloat(getVal(["indice_de_saturation_lsi", "isl", "lsi", "indice_lsi"], "0.0")) || 0.0,
+      lsi_status: getVal(["etat_de_l_eau", "etat_de_l_eau_lsi", "lsi_status", "statut_lsi"]) || getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_etat_de_l_eau") || k.endsWith("_etat_de_l_eau_lsi") || k.endsWith("_statut_isl") || k.endsWith("_statut_lsi") || k.endsWith("_lsi_status"))) || "Eau équilibrée",
       free_cl: getVal(["chlore_libre", "free_chlorine"], "1.5"),
-      active_cl: getVal(["chlore_actif", "active_chlorine"], "0.6"),
+      active_cl: getVal(["chlore_actif_reel_hocl", "chlore_actif", "active_chlorine"], "0.6"),
       battery: getVal(["batterie", "battery", "battery_level"], "100"),
-      pool_name: states[ph_entity_key] ? states[ph_entity_key].attributes?.friendly_name?.split(" ")[0] || "Piscine" : "Piscine",
+      pool_name: states[ph_entity_key] ? states[ph_entity_key].attributes?.friendly_name?.replace(/ pH$/i, "").replace(/^DomoLink Pool /i, "") || "Piscine" : "Piscine",
     };
   }
 
@@ -995,25 +1002,29 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   }
 
   _updateData() {
-    const d = this._extractData();
-    const cardEl = this.querySelector("#domolink_pool-card-content");
-    const adviceEl = this.querySelector("#advice-content");
-    const syncTimeEl = this.querySelector("#last-sync-time");
+    try {
+      const d = this._extractData();
+      const cardEl = this.querySelector("#domolink_pool-card-content");
+      const adviceEl = this.querySelector("#advice-content");
+      const syncTimeEl = this.querySelector("#last-sync-time");
 
-    if (syncTimeEl) {
-      const formattedDate = this._formatDate(d.last_measure);
-      const battNum = parseFloat(d.battery);
-      const battStr = isNaN(battNum) ? `${d.battery}%` : (d.battery.includes('.') ? `${d.battery}%` : `${battNum.toFixed(1)}%`);
-      syncTimeEl.textContent = `Dernière mesure : ${formattedDate} • Batterie : ${battStr}`;
-    }
+      if (syncTimeEl) {
+        const formattedDate = this._formatDate(d.last_measure);
+        const battNum = parseFloat(d.battery);
+        const battStr = isNaN(battNum) ? `${d.battery}%` : (d.battery.includes('.') ? `${d.battery}%` : `${battNum.toFixed(1)}%`);
+        syncTimeEl.textContent = `Dernière mesure : ${formattedDate} • Batterie : ${battStr}`;
+      }
 
-    if (cardEl) {
-      cardEl.innerHTML = this._view === "analyse" ? this._renderAnalyseCard(d) : this._renderControleCard(d);
-      this._bindCardEvents(cardEl, d);
-    }
+      if (cardEl) {
+        cardEl.innerHTML = this._view === "analyse" ? this._renderAnalyseCard(d) : this._renderControleCard(d);
+        this._bindCardEvents(cardEl, d);
+      }
 
-    if (adviceEl) {
-      adviceEl.innerHTML = this._renderAdviceSection(d);
+      if (adviceEl) {
+        adviceEl.innerHTML = this._renderAdviceSection(d);
+      }
+    } catch (err) {
+      console.error("DomoLink Pool Control: Erreur lors de la mise à jour des données :", err);
     }
   }
 
