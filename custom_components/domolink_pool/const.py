@@ -1,9 +1,17 @@
-"""Constants for the DomoLink Pool Control integration."""
+import json
+import os
 from homeassistant.const import Platform
 
 DOMAIN = "domolink_pool"
 NAME = "DomoLink Pool Control"
-VERSION = "1.0.7"
+
+# Source unique de vérité : la version est lue directement depuis manifest.json (requis par HA & HACS)
+_MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "manifest.json")
+try:
+    with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
+        VERSION = json.load(_f).get("version", "unknown")
+except Exception:
+    VERSION = "unknown"
 
 PLATFORMS = [
     Platform.SENSOR,
