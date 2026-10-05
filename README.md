@@ -3,6 +3,8 @@
 Contrôlez et surveillez la chimie de votre piscine de manière centralisée, **sans capteur propriétaire**.
 DomoLink Pool Control remplace la logique Cloud (Flipr, etc.) par les capteurs locaux (Zigbee, Tuya, Wi-Fi) de votre choix ! 
 
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy+me+a+coffee&emoji=☕&slug=Socrate&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/Socrate)
+
 ## 🌟 Fonctionnalités Principales
 - **Support Universel** : Associez vos entités existantes (pH, Température, ORP/Redox, Température Air, UV) issues d'autres intégrations.
 - **Calculs de Chimie Avancés** : Équilibre de l'eau (Indice de Langelier), recommandations de temps de filtration, conseils de dosage (pH Minus, Chlore Choc, etc.).
