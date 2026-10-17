@@ -24,3 +24,13 @@ DomoLink Pool Control remplace la logique Cloud (Flipr, etc.) par les capteurs l
 
 ## ⚙️ Configuration
 Via le bouton **Configurer** de l'intégration, vous pouvez ajuster les paramètres de chimie (Volume de la piscine, TAC, TH, CYA, TDS) pour des calculs sur mesure.
+
+---
+
+## ☕ Soutenir le projet / Support
+
+Si vous appréciez cette intégration et souhaitez soutenir son développement continu ainsi que la maintenance des futures versions :
+
+<a href="https://buymeacoffee.com/Socrate" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="210">
+</a>
