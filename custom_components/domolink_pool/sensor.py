@@ -79,5 +79,5 @@ class DomolinkPoolFullSensor(CoordinatorEntity, SensorEntity):
         if val is None:
             return None
         if isinstance(val, float):
-            return round(val, 2)
+            return round(val, 4 if self._data_key == "active_chlorine" else 2)
         return val

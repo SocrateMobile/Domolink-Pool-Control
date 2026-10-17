@@ -6,6 +6,7 @@ from datetime import timedelta
 import json
 import logging
 import os
+from pathlib import Path
 import re
 import shutil
 import tempfile
@@ -58,10 +59,10 @@ def get_installed_version() -> str:
         if os.path.exists(manifest_path):
             with open(manifest_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                return str(data.get("version", "5.7.3"))
+                return str(data.get("version", VERSION))
     except Exception as err:
         _LOGGER.debug("Could not read manifest.json version for domolink_pool: %s", err)
-    return "5.7.3"
+    return VERSION
 
 
 async def async_setup_entry(
@@ -70,7 +71,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the update platform for DomoLink Pool Control."""
-    installed_ver = get_installed_version()
+    installed_ver = await hass.async_add_executor_job(get_installed_version)
     update_entity = DomolinkPoolUpdateEntity(
         hass=hass,
         entry=entry,
@@ -169,7 +170,7 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
                 if not clean_tag:
                     return
 
-                self._attr_installed_version = get_installed_version()
+                self._attr_installed_version = await self.hass.async_add_executor_job(get_installed_version)
                 self._attr_latest_version = clean_tag
                 self._attr_release_summary = data.get("name") or f"Version {clean_tag}"
                 self._release_body = data.get("body") or ""
@@ -266,21 +267,31 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
             except Exception as e:
                 _LOGGER.warning("DomoLink Pool Control Pool: Impossible de lancer la sauvegarde pré-update: %s", e)
 
-        temp_dir = tempfile.mkdtemp(prefix="domolink_pool_update_")
+        temp_dir = await self.hass.async_add_executor_job(
+            lambda: tempfile.mkdtemp(prefix="domolink_pool_update_")
+        )
         zip_path = os.path.join(temp_dir, "release.zip")
 
         try:
             session = async_get_clientsession(self.hass)
             headers = {"User-Agent": "HomeAssistant-DomoLink Pool ControlPool"}
+            chunks: list[bytes] = []
             async with session.get(self._zip_download_url, headers=headers, timeout=aiohttp.ClientTimeout(total=90)) as resp:
                 if resp.status != 200:
                     raise RuntimeError(f"Échec téléchargement release DomoLink Pool Control (HTTP {resp.status})")
-                with open(zip_path, "wb") as f:
-                    while True:
-                        chunk = await resp.content.read(65536)
-                        if not chunk:
-                            break
-                        f.write(chunk)
+                while True:
+                    chunk = await resp.content.read(65536)
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+
+            zip_bytes = b"".join(chunks)
+
+            def _write_zip_file(path: str, content: bytes) -> None:
+                with open(path, "wb") as f:
+                    f.write(content)
+
+            await self.hass.async_add_executor_job(_write_zip_file, zip_path, zip_bytes)
 
             self._attr_update_percentage = 40
             if hasattr(self, "hass") and self.hass is not None and getattr(self, "entity_id", None) is not None:
@@ -292,7 +303,14 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
             def _do_extract_and_copy() -> None:
                 extract_path = os.path.join(temp_dir, "extracted")
                 os.makedirs(extract_path, exist_ok=True)
+                extract_root = Path(extract_path).resolve()
                 with zipfile.ZipFile(zip_path, "r") as z:
+                    for member in z.infolist():
+                        member_path = (extract_root / member.filename).resolve()
+                        if not member_path.is_relative_to(extract_root):
+                            raise RuntimeError(
+                                f"Archive invalide (Zip Slip détecté) : {member.filename}"
+                            )
                     z.extractall(extract_path)
 
                 source_component_dir = None
@@ -371,4 +389,6 @@ class DomolinkPoolUpdateEntity(UpdateEntity):
             _LOGGER.error("DomoLink Pool Control auto-update failed: %s", err, exc_info=True)
             raise HomeAssistantError(f"Échec de la mise à jour : {err}") from err
         finally:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            await self.hass.async_add_executor_job(
+                lambda: shutil.rmtree(temp_dir, ignore_errors=True)
+            )

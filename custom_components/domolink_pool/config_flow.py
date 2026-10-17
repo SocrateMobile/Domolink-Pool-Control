@@ -53,14 +53,16 @@ class DomolinkPoolConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class DomolinkPoolOptionsFlowHandler(config_entries.OptionsFlow):
     """Options de chimie de l'eau et configuration."""
 
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
+    def __init__(self, config_entry: config_entries.ConfigEntry | None = None) -> None:
+        """Initialise l'OptionsFlow sans écraser la propriété read-only config_entry (HA 2024.11+)."""
+        self._config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        opt = {**self.config_entry.data, **self.config_entry.options}
+        entry = self._config_entry or getattr(self, "config_entry", None)
+        opt = {**(entry.data if entry else {}), **(entry.options if entry else {})}
         schema = vol.Schema({
             vol.Optional("pump_entity", description={"suggested_value": opt.get("pump_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
             vol.Optional(CONF_TAC, default=opt.get(CONF_TAC, DEFAULT_TAC)): int,

@@ -46,7 +46,7 @@ def get_token() -> str:
 
 
 def update_version_files(new_ver: str) -> None:
-    """Update version in manifest.json (Single Source of Truth)."""
+    """Update version in manifest.json and const.py."""
     # 1. manifest.json
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -55,6 +55,20 @@ def update_version_files(new_ver: str) -> None:
         json.dump(data, f, indent=2)
         f.write("\n")
     print(f"Updated {MANIFEST_PATH} -> {new_ver}")
+
+    # 2. const.py
+    if os.path.exists(CONST_PATH):
+        with open(CONST_PATH, "r", encoding="utf-8") as f:
+            const_content = f.read()
+        new_const = re.sub(
+            r'^VERSION\s*=\s*["\'][^"\']*["\']',
+            f'VERSION = "{new_ver}"',
+            const_content,
+            flags=re.MULTILINE,
+        )
+        with open(CONST_PATH, "w", encoding="utf-8") as f:
+            f.write(new_const)
+        print(f"Updated {CONST_PATH} -> {new_ver}")
 
 
 def run_cmd(cmd: list[str]) -> None:
@@ -83,9 +97,8 @@ def create_github_release(new_ver: str, release_notes: str, token: str) -> None:
         import certifi
 
         ctx.load_verify_locations(certifi.where())
-    except Exception:
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+    except ImportError:
+        pass
 
     req = urllib.request.Request(
         url,

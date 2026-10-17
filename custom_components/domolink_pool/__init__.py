@@ -7,8 +7,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.components import frontend
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.util import dt as dt_util
 import os
-import datetime
 
 try:
     from homeassistant.components.http import StaticPathConfig
@@ -68,7 +68,7 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
             "air_temp": air_temp,
             "uv_index": uv,
             "pump_entity": pump_ent_id,
-            "last_update": datetime.datetime.now().isoformat()
+            "last_update": dt_util.now()
         }
 
         # Calculate chemistry
