@@ -1,10 +1,16 @@
+import json
+import os
 from homeassistant.const import Platform
 
 DOMAIN = "domolink_pool"
 NAME = "DomoLink Pool Control"
 
-# Version synchronisée avec manifest.json (sans lecture synchrone bloquante sur l'event loop à l'import)
-VERSION = "1.0.8"
+_MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "manifest.json")
+try:
+    with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
+        VERSION = json.load(_f).get("version", "1.0.12")
+except Exception:
+    VERSION = "1.0.12"
 
 PLATFORMS = [
     Platform.SENSOR,
