@@ -853,19 +853,11 @@ class DomoLinkPoolControlPanel extends HTMLElement {
     const all_keys = Object.keys(states);
     const domolink_keys = all_keys.filter((e) => e.includes("domolink_pool"));
     const configured_pump = (domolink_keys.find(e => e.endsWith("_pump_entity")) && states[domolink_keys.find(e => e.endsWith("_pump_entity"))]?.state) || null;
-    const pump_entity_key = (configured_pump && states[configured_pump]) ? configured_pump : Object.keys(states).find(
-      (e) => e.startsWith("switch.") && !e.includes("scanner") && !e.includes("ble") && (
-        e.includes("pompe_filtration") || e.includes("pump_filtration") || e.includes("pompe") || e.includes("pump") || e.includes("filtration") || e.includes("domolink_pool_hub")
-      )
-    ) || Object.keys(states).find(
-      (e) => e.startsWith("switch.") && !e.includes("scanner") && !e.includes("ble") && (
-        (prefix && e.startsWith(prefix.replace("sensor.", "switch.")))
-      )
-    );
+    const pump_entity_key = (configured_pump && states[configured_pump]) ? configured_pump : null;
     const pump_state = pump_entity_key && states[pump_entity_key] ? states[pump_entity_key].state : "off";
 
-    const ph_val = getVal("ph", "7.2");
-    const redox_val = getVal(["potentiel_redox", "redox"], "650");
+    const ph_val = getVal("ph", "--");
+    const redox_val = getVal(["potentiel_redox", "redox"], "--");
 
     // Calcul contextuel dynamique du badge pH
     const ph_num = parseFloat(ph_val);
@@ -935,9 +927,9 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       prefix,
       pump_entity_key,
       pump_state,
-      air_temp: getVal(["temperature_de_l_air", "air_temp", "air_temperature"], "32"),
+      air_temp: getVal(["temperature_de_l_air", "air_temp", "air_temperature"], "--"),
       uv_index: getVal(["indice_uv", "uv_index"], "0"),
-      water_temp: getVal(["temperature_de_l_eau", "temperature", "water_temp", "water_temperature"], "28"),
+      water_temp: getVal(["temperature_de_l_eau", "temperature", "water_temp", "water_temperature"], "--"),
       ph_val,
       ph_status,
       ph_badge_icon,
@@ -956,7 +948,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       lsi_status: getVal(["etat_de_l_eau", "etat_de_l_eau_lsi", "lsi_status", "statut_lsi"]) || getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_etat_de_l_eau") || k.endsWith("_etat_de_l_eau_lsi") || k.endsWith("_statut_isl") || k.endsWith("_statut_lsi") || k.endsWith("_lsi_status"))) || "Eau équilibrée",
       free_cl: getVal(["chlore_libre", "free_chlorine"], "1.5"),
       active_cl: getVal(["chlore_actif_reel_hocl", "chlore_actif", "active_chlorine"], "0.6"),
-      battery: getVal(["batterie", "battery", "battery_level"], "100"),
+      battery: getVal(["batterie", "battery", "battery_level"], "--"),
       pool_name: states[ph_entity_key] ? states[ph_entity_key].attributes?.friendly_name?.replace(/ pH$/i, "").replace(/^DomoLink Pool /i, "") || "Piscine" : "Piscine",
     };
   }
@@ -1082,22 +1074,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           </div>
 
           <div class="card-subblock" style="display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 8px; font-weight: 700; color: #94a3b8; text-transform: uppercase; text-align: center; margin-bottom: 4px;">Probabilité dans les 5h</div>
-            <div style="display: flex; justify-content: space-around; align-items: center;">
-              <div style="text-align: center;">
-                <div style="font-size: 14px;">🌧️</div>
-                <div style="font-size: 11px; font-weight: 700; color: #475569;">0%</div>
-              </div>
-              <div style="height: 20px; width: 1px; background: #e2e8f0;"></div>
-              <div style="text-align: center;">
-                <div style="font-size: 14px;">💨</div>
-                <div style="font-size: 11px; font-weight: 700; color: #475569;">10km/h</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Dernière Mesure -->
+            <!-- Dernière Mesure -->
         <div class="card-subblock" style="display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="background: #ff2d75; color: white; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
@@ -1260,73 +1237,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           </div>
         </div>
 
-        <!-- Historique pH 7 jours -->
-        <div class="card-subblock history-section">
-          <div class="history-title">Taux de pH sur les 7 derniers jours</div>
-          <div class="history-days-row">
-            <div class="history-day-item"><div class="history-day-pill">7.8 ↘</div><div class="history-day-date">J-6</div></div>
-            <div class="history-day-item"><div class="history-day-pill">7.7 ↘</div><div class="history-day-date">J-5</div></div>
-            <div class="history-day-item"><div class="history-day-pill">7.8 ↗</div><div class="history-day-date">J-4</div></div>
-            <div class="history-day-item"><div class="history-day-pill">7.8 ↗</div><div class="history-day-date">J-3</div></div>
-            <div class="history-day-item"><div class="history-day-pill">7.6 ↘</div><div class="history-day-date">J-2</div></div>
-            <div class="history-day-item"><div class="history-day-pill">7.3 ↘</div><div class="history-day-date">Hier</div></div>
-            <div class="history-day-item"><div class="history-day-pill current">${d.ph_val}</div><div class="history-day-date">Auj.</div></div>
-          </div>
-        </div>
-
-        <!-- Historique Redox 7 jours -->
-        <div class="card-subblock history-section">
-          <div class="history-title">Taux de Redox(mV) sur les 7 derniers jours</div>
-          <div class="history-days-row">
-            <div class="history-day-item"><div class="history-day-pill">628 ↘</div><div class="history-day-date">J-6</div></div>
-            <div class="history-day-item"><div class="history-day-pill">577 ↘</div><div class="history-day-date">J-5</div></div>
-            <div class="history-day-item"><div class="history-day-pill">533 ↗</div><div class="history-day-date">J-4</div></div>
-            <div class="history-day-item"><div class="history-day-pill">537 ↘</div><div class="history-day-date">J-3</div></div>
-            <div class="history-day-item"><div class="history-day-pill">516 ↘</div><div class="history-day-date">J-2</div></div>
-            <div class="history-day-item"><div class="history-day-pill">580 ↗</div><div class="history-day-date">Hier</div></div>
-            <div class="history-day-item"><div class="history-day-pill current">${d.redox_val}</div><div class="history-day-date">Auj.</div></div>
-          </div>
-        </div>
-
-        <!-- Historique Temp Eau 7 jours -->
-        <div class="card-subblock history-section">
-          <div class="history-title">Température de l'eau sur les 7 derniers jours</div>
-          <div class="history-days-row">
-            <div class="history-day-item"><div class="history-day-pill">29° ↘</div><div class="history-day-date">J-6</div></div>
-            <div class="history-day-item"><div class="history-day-pill">29° ↘</div><div class="history-day-date">J-5</div></div>
-            <div class="history-day-item"><div class="history-day-pill">28° ↘</div><div class="history-day-date">J-4</div></div>
-            <div class="history-day-item"><div class="history-day-pill">28° ↗</div><div class="history-day-date">J-3</div></div>
-            <div class="history-day-item"><div class="history-day-pill">29° ↗</div><div class="history-day-date">J-2</div></div>
-            <div class="history-day-item"><div class="history-day-pill">29° ↘</div><div class="history-day-date">Hier</div></div>
-            <div class="history-day-item"><div class="history-day-pill current">${d.water_temp}°</div><div class="history-day-date">Auj.</div></div>
-          </div>
-        </div>
-
-        <!-- Prévision Météo 4 Jours -->
-        <div class="card-subblock" style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="text-align: center; flex: 1;">
-            <div style="font-size: 16px;">☀️</div>
-            <div style="font-size: 10px; font-weight: 700; color: #475569; margin-top: 2px;">25 | 36°</div>
-          </div>
-          <div style="height: 24px; width: 1px; background: #e2e8f0;"></div>
-          <div style="text-align: center; flex: 1;">
-            <div style="font-size: 16px;">☀️</div>
-            <div style="font-size: 10px; font-weight: 700; color: #475569; margin-top: 2px;">21 | 34°</div>
-          </div>
-          <div style="height: 24px; width: 1px; background: #e2e8f0;"></div>
-          <div style="text-align: center; flex: 1;">
-            <div style="font-size: 16px;">⛅</div>
-            <div style="font-size: 10px; font-weight: 700; color: #475569; margin-top: 2px;">20 | 38°</div>
-          </div>
-          <div style="height: 24px; width: 1px; background: #e2e8f0;"></div>
-          <div style="text-align: center; flex: 1;">
-            <div style="font-size: 16px;">☀️</div>
-            <div style="font-size: 10px; font-weight: 700; color: #475569; margin-top: 2px;">22 | 39°</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- BAS DEGRADE SYNTHESE -->
+        <!-- BAS DEGRADE SYNTHESE -->
       <div class="domolink_pool-bottom-gradient">
         <div style="display: flex; justify-content: space-around; align-items: flex-end; padding: 6px 0;">
           <div style="text-align: center; flex: 1;">
