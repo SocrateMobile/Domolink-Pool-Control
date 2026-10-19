@@ -9,7 +9,6 @@ VERSION = "1.0.8"
 PLATFORMS = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
-    Platform.UPDATE,
 ]
 
 # ── Configuration de traitement ────────────────────────────
