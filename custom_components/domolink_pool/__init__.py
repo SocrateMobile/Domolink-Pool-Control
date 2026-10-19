@@ -50,7 +50,7 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
         def safe_float(state):
             try:
                 return float(state.state) if state and state.state not in ("unavailable", "unknown") else None
-            except:
+            except (ValueError, TypeError):
                 return None
 
         ph = safe_float(ph_ent)
