@@ -73,7 +73,7 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
 
         # Calculate chemistry
         try:
-            chem = compute_all_chemistry(base_data, options)
+            chem = compute_all_chemistry(base_data, opts)
             base_data.update(chem)
         except Exception as e:
             _LOGGER.error(f"DomoLink Pool Control: Erreur lors du calcul de la chimie: {e}")

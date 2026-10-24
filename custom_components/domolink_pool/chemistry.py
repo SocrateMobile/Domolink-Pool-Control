@@ -133,7 +133,7 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
     # 1. LSI
     lsi = compute_isl(temp, ph, tac, th, tds)
     if lsi is None:
-        lsi_status = "équilibrée"
+        lsi_status = None
     elif lsi < -0.3:
         lsi_status = "corrosive"
     elif lsi > 0.3:
@@ -150,8 +150,8 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
 
     # 4. Statuts simples
     if ph is None:
-        ph_status = "OK"
-        ph_simple = "OK"
+        ph_status = None
+        ph_simple = None
     elif 7.0 <= ph <= 7.4:
         ph_status = "Idéal"
         ph_simple = "OK"
@@ -198,8 +198,8 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
             cl_status = "Insuffisant"
             cl_simple = "KO"
     else:
-        cl_status = "Idéal"
-        cl_simple = "OK"
+        cl_status = None
+        cl_simple = None
 
     # 5. Doses de correction
     pool_volume_m3 = pool_volume
@@ -216,7 +216,7 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
         else:
             dose_ph_minus = dose_ph_plus = 0
     else:
-        dose_ph_minus = dose_ph_plus = 0
+        dose_ph_minus = dose_ph_plus = None
 
     if tac is not None and pool_volume_m3 > 0 and tac < TAC_TARGET:
         tac_diff = TAC_TARGET - tac
@@ -240,7 +240,7 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
             dose_cl_shock = 0
             dose_cl_maint = 0
     else:
-        dose_cl_maint = dose_cl_shock = 0
+        dose_cl_maint = dose_cl_shock = None
 
     # 6. Temps de filtration
     if temp is not None:
@@ -260,8 +260,8 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
             pump_hours = round(max(PUMP_MIN_HOURS, min(PUMP_MAX_HOURS, base_h + malus)), 1)
             conseil_filtration = f"{pump_hours}h"
     else:
-        pump_hours = 12.0
-        conseil_filtration = "12.0h"
+        pump_hours = None
+        conseil_filtration = None
 
     # État de l'eau
     if lsi_status == "corrosive":
@@ -275,21 +275,19 @@ def compute_all_chemistry(base_data: dict[str, Any], options: dict[str, Any]) ->
     elif ph is not None:
         water_state = "Eau équilibrée"
     else:
-        water_state = "En attente d'analyse"
+        water_state = None
 
     # Conductivité
     conductivity = base_data.get("conductivity")
-    if conductivity is None:
-        conductivity = round(tds * 1.56, 1) if tds > 0 else 0.0
 
     return {
-        "chlorine": free_cl if free_cl is not None else 0.0,
-        "free_chlorine": free_cl if free_cl is not None else 0.0,
-        "active_chlorine": active_cl if active_cl is not None else 0.0,
+        "chlorine": free_cl,
+        "free_chlorine": free_cl,
+        "active_chlorine": active_cl,
         "conductivity": conductivity,
-        "lsi": lsi if lsi is not None else 0.0,
+        "lsi": lsi,
         "lsi_status": lsi_status,
-        "ph_equilibre": ph_equilibre if ph_equilibre is not None else 7.5,
+        "ph_equilibre": ph_equilibre,
         "ph_status": ph_status,
         "ph_simple": ph_simple,
         "chlorine_status": cl_status,

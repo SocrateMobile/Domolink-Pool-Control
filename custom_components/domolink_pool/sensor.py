@@ -81,3 +81,11 @@ class DomolinkPoolFullSensor(CoordinatorEntity, SensorEntity):
         if isinstance(val, float):
             return round(val, 4 if self._data_key == "active_chlorine" else 2)
         return val
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if not self.coordinator.data:
+            return None
+        if self._data_key in ("pump_hours", "conseil_filtration", "ph", "water_state"):
+            return {"pump_entity": self.coordinator.data.get("pump_entity") or None}
+        return None

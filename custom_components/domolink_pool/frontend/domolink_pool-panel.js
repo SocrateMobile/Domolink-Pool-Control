@@ -4,6 +4,16 @@
  * et intègre le volet complet de conseils d'entretien & régulation (pH, Chlore, LSI, Filtration).
  */
 
+function escapeHtml(val) {
+  if (val === null || val === undefined) return "";
+  return String(val)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 class DomoLinkPoolControlPanel extends HTMLElement {
   constructor() {
     super();
@@ -833,11 +843,11 @@ class DomoLinkPoolControlPanel extends HTMLElement {
     );
     const prefix = ph_entity_key ? ph_entity_key.replace("_ph", "") : "sensor.domolink_pool";
 
-    const getVal = (suffixes, def = "0") => {
+    const getVal = (suffixes, def = "--") => {
       const list = Array.isArray(suffixes) ? suffixes : [suffixes];
       for (const suffix of list) {
         const e = states[`${prefix}_${suffix}`];
-        if (e && e.state !== undefined && e.state !== "unavailable" && e.state !== "unknown") {
+        if (e && e.state !== undefined && e.state !== "unavailable" && e.state !== "unknown" && e.state !== "None") {
           return e.state;
         }
       }
@@ -846,24 +856,47 @@ class DomoLinkPoolControlPanel extends HTMLElement {
 
     const getFullEntity = (pred) => {
       const k = Object.keys(states).find(pred);
-      return k && states[k] ? states[k].state : null;
+      const st = k && states[k] ? states[k].state : null;
+      return st && st !== "unavailable" && st !== "unknown" && st !== "None" ? st : null;
     };
 
-    // Pompe de filtration : switch configuré dans l'intégration ou détection automatique
+    // Pompe de filtration : lecture de l'attribut pump_entity exposé par les capteurs de filtration / statut
     const all_keys = Object.keys(states);
     const domolink_keys = all_keys.filter((e) => e.includes("domolink_pool"));
-    const configured_pump = (domolink_keys.find(e => e.endsWith("_pump_entity")) && states[domolink_keys.find(e => e.endsWith("_pump_entity"))]?.state) || null;
-    const pump_entity_key = (configured_pump && states[configured_pump]) ? configured_pump : null;
-    const pump_state = pump_entity_key && states[pump_entity_key] ? states[pump_entity_key].state : "off";
+    let configured_pump = null;
+    const candidate_keys = [
+      `${prefix}_pump_hours`,
+      `${prefix}_temps_de_filtration_recommande`,
+      `${prefix}_conseil_filtration`,
+      `${prefix}_conseil_de_filtration`,
+      ph_entity_key,
+      ...domolink_keys,
+    ].filter(Boolean);
+
+    for (const k of candidate_keys) {
+      const attrPump = states[k]?.attributes?.pump_entity;
+      if (attrPump && typeof attrPump === "string") {
+        configured_pump = attrPump;
+        break;
+      }
+    }
+    if (!configured_pump) {
+      const legacyKey = domolink_keys.find((e) => e.endsWith("_pump_entity"));
+      if (legacyKey && states[legacyKey]?.state && states[legacyKey].state !== "unavailable" && states[legacyKey].state !== "unknown") {
+        configured_pump = states[legacyKey].state;
+      }
+    }
+    const pump_entity_key = configured_pump && states[configured_pump] ? configured_pump : null;
+    const pump_state = pump_entity_key ? states[pump_entity_key].state : "unavailable";
 
     const ph_val = getVal("ph", "--");
     const redox_val = getVal(["potentiel_redox", "redox"], "--");
 
     // Calcul contextuel dynamique du badge pH
     const ph_num = parseFloat(ph_val);
-    let ph_status = "Idéal";
-    let ph_badge_icon = "👍";
-    let ph_badge_class = "pill-ok";
+    let ph_status = "En attente";
+    let ph_badge_icon = "⏳";
+    let ph_badge_class = "pill-wait";
 
     if (isNaN(ph_num)) {
       ph_status = "En attente";
@@ -893,9 +926,9 @@ class DomoLinkPoolControlPanel extends HTMLElement {
 
     // Calcul contextuel dynamique du badge Chlore / Redox
     const rx_num = parseFloat(redox_val);
-    let cl_status = "Idéal";
-    let cl_badge_icon = "👍";
-    let cl_badge_class = "pill-ok";
+    let cl_status = "En attente";
+    let cl_badge_icon = "⏳";
+    let cl_badge_class = "pill-wait";
 
     if (isNaN(rx_num)) {
       cl_status = "En attente";
@@ -923,12 +956,29 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       cl_badge_class = "pill-danger";
     }
 
+    const raw_lsi = getVal(["indice_de_saturation_lsi", "isl", "lsi", "indice_lsi"], null);
+    const parsed_lsi = raw_lsi !== null ? parseFloat(raw_lsi) : NaN;
+    const lsi_val = !isNaN(parsed_lsi) ? parsed_lsi : null;
+
+    const lsi_status =
+      getVal(["etat_de_l_eau", "etat_de_l_eau_lsi", "lsi_status", "statut_lsi"], null) ||
+      getFullEntity(
+        (k) =>
+          k.includes("domolink_pool") &&
+          (k.endsWith("_etat_de_l_eau") ||
+            k.endsWith("_etat_de_l_eau_lsi") ||
+            k.endsWith("_statut_isl") ||
+            k.endsWith("_statut_lsi") ||
+            k.endsWith("_lsi_status"))
+      ) ||
+      "--";
+
     return {
       prefix,
       pump_entity_key,
       pump_state,
       air_temp: getVal(["temperature_de_l_air", "air_temp", "air_temperature"], "--"),
-      uv_index: getVal(["indice_uv", "uv_index"], "0"),
+      uv_index: getVal(["indice_uv", "uv_index"], "--"),
       water_temp: getVal(["temperature_de_l_eau", "temperature", "water_temp", "water_temperature"], "--"),
       ph_val,
       ph_status,
@@ -938,23 +988,28 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       cl_status,
       cl_badge_icon,
       cl_badge_class,
-      last_measure: getVal(["derniere_mesure", "last_update", "last_measurement"], "Aujourd'hui"),
-      advice_filtration: getVal(["conseil_de_filtration", "conseil_filtration", "temps_de_filtration_recommande", "filtration_advice", "pump_hours"], "Filtrer 12h / jour"),
+      last_measure: getVal(["derniere_mesure", "last_update", "last_measurement"], "--"),
+      advice_filtration: getVal(
+        ["conseil_de_filtration", "conseil_filtration", "temps_de_filtration_recommande", "filtration_advice", "pump_hours"],
+        "--"
+      ),
       ph_minus_dose: parseFloat(getVal(["dose_ph_moins", "dose_ph", "dose_ph_minus", "ph_minus_dose"], "0")) || 0,
       ph_plus_dose: parseFloat(getVal(["dose_ph_plus", "dose_ph_2", "ph_plus_dose"], "0")) || 0,
       cl_shock_dose: parseFloat(getVal(["dose_chlore_choc", "dose_cl_shock", "cl_shock_dose"], "0")) || 0,
       cl_maint_dose: parseFloat(getVal(["dose_chlore_entretien", "dose_cl_maint", "cl_maint_dose"], "0")) || 0,
-      lsi_val: parseFloat(getVal(["indice_de_saturation_lsi", "isl", "lsi", "indice_lsi"], "0.0")) || 0.0,
-      lsi_status: getVal(["etat_de_l_eau", "etat_de_l_eau_lsi", "lsi_status", "statut_lsi"]) || getFullEntity((k) => k.includes("domolink_pool") && (k.endsWith("_etat_de_l_eau") || k.endsWith("_etat_de_l_eau_lsi") || k.endsWith("_statut_isl") || k.endsWith("_statut_lsi") || k.endsWith("_lsi_status"))) || "Eau équilibrée",
-      free_cl: getVal(["chlore_libre", "free_chlorine"], "1.5"),
-      active_cl: getVal(["chlore_actif_reel_hocl", "chlore_actif", "active_chlorine"], "0.6"),
+      lsi_val,
+      lsi_status,
+      free_cl: getVal(["chlore_libre", "free_chlorine"], "--"),
+      active_cl: getVal(["chlore_actif_reel_hocl", "chlore_actif", "active_chlorine"], "--"),
       battery: getVal(["batterie", "battery", "battery_level"], "--"),
-      pool_name: states[ph_entity_key] ? states[ph_entity_key].attributes?.friendly_name?.replace(/ pH$/i, "").replace(/^DomoLink Pool /i, "") || "Piscine" : "Piscine",
+      pool_name: states[ph_entity_key]
+        ? states[ph_entity_key].attributes?.friendly_name?.replace(/ pH$/i, "").replace(/^DomoLink Pool /i, "") || "Piscine"
+        : "Piscine",
     };
   }
 
   _formatDate(dateStr) {
-    if (!dateStr || dateStr === "Aujourd'hui" || dateStr === "Inconnu" || dateStr === "unavailable" || dateStr === "unknown") {
+    if (!dateStr || dateStr === "--" || dateStr === "Aujourd'hui" || dateStr === "Inconnu" || dateStr === "unavailable" || dateStr === "unknown") {
       return dateStr || "Inconnu";
     }
 
@@ -1020,15 +1075,19 @@ class DomoLinkPoolControlPanel extends HTMLElement {
 
   _renderAnalyseCard(d) {
     // Calcul Knob pH
-    const ph_num = parseFloat(d.ph_val) || 7.2;
-    let ph_pct = Math.max(0, Math.min(1, (ph_num - 6.4) / (8.0 - 6.4)));
+    const ph_parsed = parseFloat(d.ph_val);
+    const has_ph = !isNaN(ph_parsed);
+    const ph_num = has_ph ? ph_parsed : 7.2;
+    const ph_pct = Math.max(0, Math.min(1, (ph_num - 6.4) / (8.0 - 6.4)));
     const ph_angle = (135 + ph_pct * 270) * (Math.PI / 180);
     const ph_x = 50 + 42 * Math.cos(ph_angle);
     const ph_y = 50 + 42 * Math.sin(ph_angle);
 
     // Calcul Knob Redox
-    const rx_num = parseFloat(d.redox_val) || 650;
-    let rx_pct = Math.max(0, Math.min(1, (rx_num - 465) / (965 - 465)));
+    const rx_parsed = parseFloat(d.redox_val);
+    const has_rx = !isNaN(rx_parsed);
+    const rx_num = has_rx ? rx_parsed : 650;
+    const rx_pct = Math.max(0, Math.min(1, (rx_num - 465) / (965 - 465)));
     const rx_angle = (135 + rx_pct * 270) * (Math.PI / 180);
     const rx_x = 50 + 42 * Math.cos(rx_angle);
     const rx_y = 50 + 42 * Math.sin(rx_angle);
@@ -1039,7 +1098,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       <!-- EN-TETE & ONGLETS -->
       <div class="card-header-bar">
         <div class="pool-location-selector">
-          ${d.pool_name} <span style="font-size: 10px; color: #64748b;">▼</span>
+          ${escapeHtml(d.pool_name)} <span style="font-size: 10px; color: #64748b;">▼</span>
         </div>
         <div class="tabs-pill-container">
           <button class="tab-btn active" id="tab-btn-analyse">💧 Analyse</button>
@@ -1053,13 +1112,13 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         <div class="air-meteo-row">
           <div class="air-temp-display">
             <span class="air-label">air</span>
-            <span class="air-value">${d.air_temp}°C</span>
+            <span class="air-value">${escapeHtml(d.air_temp)}°C</span>
             <span class="air-trend">↘</span>
           </div>
           <div style="height: 32px; width: 1px; background: #cbd5e1;"></div>
           <div class="uv-badge-box">
             <div style="font-size: 16px; color: #475569;">☀️ <span style="font-size: 12px; color: #94a3b8;">&gt;</span> ☁️</div>
-            <div class="uv-pill">UV ${d.uv_index}</div>
+            <div class="uv-pill">UV ${escapeHtml(d.uv_index)}</div>
           </div>
         </div>
 
@@ -1070,7 +1129,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
               <div style="font-size: 24px;">⚙️</div>
               <div style="font-size: 11px; font-weight: 700; color: #475569; line-height: 1.2;">Pompe Filtration</div>
             </div>
-            <button class="pump-btn-icon ${pumpClass}" id="btn-toggle-pump">⏻</button>
+            <button class="pump-btn-icon ${escapeHtml(pumpClass)}" id="btn-toggle-pump">⏻</button>
           </div>
 
           <div class="card-subblock" style="display: flex; flex-direction: column; justify-content: center;">
@@ -1082,7 +1141,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
             </div>
             <div>
               <div style="font-size: 14px; font-weight: 700; color: #0f172a;">Dernière Mesure</div>
-              <div style="font-size: 12px; color: #64748b; font-weight: 400; margin-top: 1px;">${this._formatDate(d.last_measure)}</div>
+              <div style="font-size: 12px; color: #64748b; font-weight: 400; margin-top: 1px;">${escapeHtml(this._formatDate(d.last_measure))}</div>
             </div>
           </div>
           <div style="background: #f1f5f9; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #64748b;">
@@ -1095,24 +1154,28 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div style="font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 2px;">Conseils & Actions</div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <div style="font-size: 15px;">⏱️</div>
-            <div style="font-size: 12px; font-weight: 500; color: #475569;">${d.advice_filtration}</div>
+            <div style="font-size: 12px; font-weight: 500; color: #475569;">${escapeHtml(d.advice_filtration)}</div>
           </div>
           ${
             d.ph_minus_dose > 0
               ? `<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #ef4444;">
-                  <span>🧪</span> Ajouter ${d.ph_minus_dose}g de pH-
+                  <span>🧪</span> Ajouter ${escapeHtml(d.ph_minus_dose)}g de pH-
                 </div>`
               : ""
           }
           ${
             d.ph_plus_dose > 0
               ? `<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #3b82f6;">
-                  <span>🧪</span> Ajouter ${d.ph_plus_dose}g de pH+
+                  <span>🧪</span> Ajouter ${escapeHtml(d.ph_plus_dose)}g de pH+
                 </div>`
               : ""
           }
           ${
-            d.ph_minus_dose === 0 && d.ph_plus_dose === 0 && d.cl_shock_dose === 0
+            !has_ph && !has_rx
+              ? `<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #64748b;">
+                  <span>⏳</span> En attente de mesures des capteurs.
+                </div>`
+              : d.ph_minus_dose === 0 && d.ph_plus_dose === 0 && d.cl_shock_dose === 0
               ? `<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #10b981;">
                   <span>✨</span> Chimie équilibrée, aucune action requise.
                 </div>`
@@ -1126,7 +1189,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         <div class="water-header-row">
           <div style="display: flex; align-items: baseline; gap: 8px;">
             <span style="font-size: 18px; font-weight: 400; opacity: 0.9;">eau</span>
-            <span class="water-temp-big">${d.water_temp}°C</span>
+            <span class="water-temp-big">${escapeHtml(d.water_temp)}°C</span>
           </div>
           <div style="background: rgba(255,255,255,0.2); border-radius: 12px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid rgba(255,255,255,0.3);">
             🔗
@@ -1147,12 +1210,12 @@ class DomoLinkPoolControlPanel extends HTMLElement {
                   </linearGradient>
                 </defs>
                 <path d="M 20.3 79.7 A 42 42 0 1 1 79.7 79.7" stroke="url(#phGrad)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.9" />
-                <circle cx="${ph_x}" cy="${ph_y}" r="6" fill="#ffffff" stroke="rgba(0,0,0,0.2)" stroke-width="2" />
+                ${has_ph ? `<circle cx="${escapeHtml(ph_x)}" cy="${escapeHtml(ph_y)}" r="6" fill="#ffffff" stroke="rgba(0,0,0,0.2)" stroke-width="2" />` : ""}
               </svg>
-              <div class="gauge-center-text">${d.ph_val}</div>
+              <div class="gauge-center-text">${escapeHtml(d.ph_val)}</div>
             </div>
             <div style="font-size: 14px; font-weight: 600; margin-top: 6px;">pH</div>
-            <div class="status-pill-badge ${d.ph_badge_class}">${d.ph_badge_icon} ${d.ph_status}</div>
+            <div class="status-pill-badge ${escapeHtml(d.ph_badge_class)}">${escapeHtml(d.ph_badge_icon)} ${escapeHtml(d.ph_status)}</div>
           </div>
 
           <!-- JAUGE CHLORE / REDOX -->
@@ -1167,12 +1230,12 @@ class DomoLinkPoolControlPanel extends HTMLElement {
                   </linearGradient>
                 </defs>
                 <path d="M 20.3 79.7 A 42 42 0 1 1 79.7 79.7" stroke="url(#rxGrad)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.9" />
-                <circle cx="${rx_x}" cy="${rx_y}" r="6" fill="#ffffff" stroke="rgba(0,0,0,0.2)" stroke-width="2" />
+                ${has_rx ? `<circle cx="${escapeHtml(rx_x)}" cy="${escapeHtml(rx_y)}" r="6" fill="#ffffff" stroke="rgba(0,0,0,0.2)" stroke-width="2" />` : ""}
               </svg>
-              <div class="gauge-center-text">${d.redox_val}</div>
+              <div class="gauge-center-text">${escapeHtml(d.redox_val)}</div>
             </div>
             <div style="font-size: 14px; font-weight: 600; margin-top: 6px;">Chlore</div>
-            <div class="status-pill-badge ${d.cl_badge_class}">${d.cl_badge_icon} ${d.cl_status}</div>
+            <div class="status-pill-badge ${escapeHtml(d.cl_badge_class)}">${escapeHtml(d.cl_badge_icon)} ${escapeHtml(d.cl_status)}</div>
           </div>
         </div>
 
@@ -1199,7 +1262,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
       <!-- EN-TETE & ONGLETS -->
       <div class="card-header-bar">
         <div class="pool-location-selector">
-          ${d.pool_name} <span style="font-size: 10px; color: #64748b;">▼</span>
+          ${escapeHtml(d.pool_name)} <span style="font-size: 10px; color: #64748b;">▼</span>
         </div>
         <div class="tabs-pill-container">
           <button class="tab-btn" id="tab-btn-analyse">💧 Analyse</button>
@@ -1213,13 +1276,13 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         <div class="air-meteo-row">
           <div class="air-temp-display">
             <span class="air-label">air</span>
-            <span class="air-value">${d.air_temp}°C</span>
+            <span class="air-value">${escapeHtml(d.air_temp)}°C</span>
             <span class="air-trend">↘</span>
           </div>
           <div style="height: 32px; width: 1px; background: #cbd5e1;"></div>
           <div class="uv-badge-box">
             <div style="font-size: 16px; color: #475569;">☀️ <span style="font-size: 12px; color: #94a3b8;">&gt;</span> ☁️</div>
-            <div class="uv-pill">UV ${d.uv_index}</div>
+            <div class="uv-pill">UV ${escapeHtml(d.uv_index)}</div>
           </div>
         </div>
 
@@ -1232,7 +1295,7 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div class="pump-actions-group">
             <button class="pump-circle-action" title="Mode Automatique">⚡ᴬ</button>
             <button class="pump-circle-action" title="Minuteur">⏱️</button>
-            <button class="pump-circle-action ${pumpClass}" id="btn-toggle-pump" style="font-weight: bold;" title="Marche/Arrêt">⏻</button>
+            <button class="pump-circle-action ${escapeHtml(pumpClass)}" id="btn-toggle-pump" style="font-weight: bold;" title="Marche/Arrêt">⏻</button>
             <button class="pump-circle-action" title="Réglages">⚙️</button>
           </div>
         </div>
@@ -1242,15 +1305,15 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         <div style="display: flex; justify-content: space-around; align-items: flex-end; padding: 6px 0;">
           <div style="text-align: center; flex: 1;">
             <div style="font-size: 14px; opacity: 0.9;">eau</div>
-            <div style="font-size: 32px; font-weight: 700;">${d.water_temp}°C</div>
+            <div style="font-size: 32px; font-weight: 700;">${escapeHtml(d.water_temp)}°C</div>
           </div>
           <div style="text-align: center; flex: 1;">
             <div style="font-size: 14px; opacity: 0.9;">pH</div>
-            <div style="font-size: 26px; font-weight: 700;">${d.ph_val}</div>
+            <div style="font-size: 26px; font-weight: 700;">${escapeHtml(d.ph_val)}</div>
           </div>
           <div style="text-align: center; flex: 1;">
             <div style="font-size: 14px; opacity: 0.9;">Chlore</div>
-            <div style="font-size: 20px; font-weight: 700;">${d.cl_status}</div>
+            <div style="font-size: 20px; font-weight: 700;">${escapeHtml(d.cl_status)}</div>
           </div>
         </div>
 
@@ -1270,36 +1333,58 @@ class DomoLinkPoolControlPanel extends HTMLElement {
   }
 
   _renderAdviceSection(d) {
-    const ph = parseFloat(d.ph_val) || 7.2;
+    const ph = parseFloat(d.ph_val);
+    const hasPh = !isNaN(ph);
     const lsi = d.lsi_val;
-    const lsi_cursor_pct = Math.max(0, Math.min(100, ((lsi + 1.0) / 2.0) * 100));
+    const hasLsi = lsi !== null && !isNaN(lsi);
+    const lsi_cursor_pct = hasLsi ? Math.max(0, Math.min(100, ((lsi + 1.0) / 2.0) * 100)) : 50;
 
-    let phTagClass = "tag-ok";
-    let phActionText = "Le pH de l'eau est dans la zone idéale (7.2 - 7.4). L'action des désinfectants est optimale.";
-    if (ph > 7.5) {
-      phTagClass = "tag-danger";
-      phActionText = `Le pH est trop élevé. L'eau risque d'entartrer les équipements et l'efficacité du chlore chute. ${
-        d.ph_minus_dose > 0 ? `<br>👉 <span class="dose-highlight">Ajoutez ${d.ph_minus_dose}g de réducteur de pH (pH-)</span> dans le bassin filtration en marche.` : ""
-      }`;
-    } else if (ph < 7.1) {
-      phTagClass = "tag-warn";
-      phActionText = `Le pH est trop bas. L'eau est corrosive pour les joints et irritante. ${
-        d.ph_plus_dose > 0 ? `<br>👉 <span class="dose-highlight">Ajoutez ${d.ph_plus_dose}g d'augmentateur de pH (pH+)</span>.` : ""
-      }`;
+    let phTagClass = "tag-info";
+    let phActionText = "Aucune mesure de pH disponible. Vérifiez la connexion de votre sonde pH.";
+    if (hasPh) {
+      if (ph > 7.5) {
+        phTagClass = "tag-danger";
+        phActionText = `Le pH est trop élevé. L'eau risque d'entartrer les équipements et l'efficacité du chlore chute. ${
+          d.ph_minus_dose > 0 ? `<br>👉 <span class="dose-highlight">Ajoutez ${escapeHtml(d.ph_minus_dose)}g de réducteur de pH (pH-)</span> dans le bassin filtration en marche.` : ""
+        }`;
+      } else if (ph < 7.1) {
+        phTagClass = "tag-warn";
+        phActionText = `Le pH est trop bas. L'eau est corrosive pour les joints et irritante. ${
+          d.ph_plus_dose > 0 ? `<br>👉 <span class="dose-highlight">Ajoutez ${escapeHtml(d.ph_plus_dose)}g d'augmentateur de pH (pH+)</span>.` : ""
+        }`;
+      } else {
+        phTagClass = "tag-ok";
+        phActionText = "Le pH de l'eau est dans la zone idéale (7.2 - 7.4). L'action des désinfectants est optimale.";
+      }
     }
 
-    const rx = parseFloat(d.redox_val) || 650;
-    let rxTagClass = "tag-ok";
-    let rxActionText = "Le potentiel d'oxydo-réduction assure une désinfection bactérienne et algicide parfaite.";
-    if (rx < 600) {
-      rxTagClass = "tag-danger";
-      rxActionText = `Le pouvoir désinfectant est insuffisant. Risque d'eau trouble ou d'apparition d'algues. ${
-        d.cl_shock_dose > 0 ? `<br>⚡ <span class="dose-highlight">Traitement Choc recommandé : ${d.cl_shock_dose}g</span>.` : ""
-      }`;
-    } else if (rx > 780) {
-      rxTagClass = "tag-warn";
-      rxActionText = "Le pouvoir désinfectant est très élevé. Réduisez la production d'électrolyse ou les ajouts de chlore.";
+    const rx = parseFloat(d.redox_val);
+    const hasRx = !isNaN(rx);
+    let rxTagClass = "tag-info";
+    let rxActionText = "Aucune mesure Redox (ORP) disponible. Vérifiez la connexion de votre sonde Redox.";
+    if (hasRx) {
+      if (rx < 600) {
+        rxTagClass = "tag-danger";
+        rxActionText = `Le pouvoir désinfectant est insuffisant. Risque d'eau trouble ou d'apparition d'algues. ${
+          d.cl_shock_dose > 0 ? `<br>⚡ <span class="dose-highlight">Traitement Choc recommandé : ${escapeHtml(d.cl_shock_dose)}g</span>.` : ""
+        }`;
+      } else if (rx > 780) {
+        rxTagClass = "tag-warn";
+        rxActionText = "Le pouvoir désinfectant est très élevé. Réduisez la production d'électrolyse ou les ajouts de chlore.";
+      } else {
+        rxTagClass = "tag-ok";
+        rxActionText = "Le potentiel d'oxydo-réduction assure une désinfection bactérienne et algicide parfaite.";
+      }
     }
+
+    const lsiTagClass = !hasLsi ? "tag-info" : Math.abs(lsi) < 0.3 ? "tag-ok" : "tag-warn";
+    const pumpStatusLabel = !d.pump_entity_key
+      ? "Non configurée"
+      : d.pump_state === "on"
+      ? "En marche"
+      : d.pump_state === "off"
+      ? "À l'arrêt"
+      : "Indisponible";
 
     return `
       <!-- 1. REGULATION DU PH -->
@@ -1308,22 +1393,22 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div class="advice-card-title">
             <span>🧪</span> Régulation du pH
           </div>
-          <div class="badge-status-tag ${phTagClass}">${d.ph_status}</div>
+          <div class="badge-status-tag ${escapeHtml(phTagClass)}">${escapeHtml(d.ph_status)}</div>
         </div>
         <div class="advice-metric-row">
           <div class="metric-box">
             <div class="metric-label">pH Actuel</div>
-            <div class="metric-val" style="color: #0284c7;">${d.ph_val}</div>
+            <div class="metric-val" style="color: #0284c7;">${escapeHtml(d.ph_val)}</div>
             <div class="metric-target">Cible : 7.2 - 7.4</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">Correction pH-</div>
-            <div class="metric-val" style="color: #dc2626;">${d.ph_minus_dose}g</div>
+            <div class="metric-val" style="color: #dc2626;">${escapeHtml(d.ph_minus_dose)}g</div>
             <div class="metric-target">Bisulfate sodique</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">Correction pH+</div>
-            <div class="metric-val" style="color: #2563eb;">${d.ph_plus_dose}g</div>
+            <div class="metric-val" style="color: #2563eb;">${escapeHtml(d.ph_plus_dose)}g</div>
             <div class="metric-target">Carbonate sodique</div>
           </div>
         </div>
@@ -1339,22 +1424,22 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div class="advice-card-title">
             <span>⚡</span> Désinfection & Chlore
           </div>
-          <div class="badge-status-tag ${rxTagClass}">${d.cl_status}</div>
+          <div class="badge-status-tag ${escapeHtml(rxTagClass)}">${escapeHtml(d.cl_status)}</div>
         </div>
         <div class="advice-metric-row">
           <div class="metric-box">
             <div class="metric-label">Redox (ORP)</div>
-            <div class="metric-val" style="color: #0284c7;">${d.redox_val} mV</div>
+            <div class="metric-val" style="color: #0284c7;">${escapeHtml(d.redox_val)} mV</div>
             <div class="metric-target">Cible : 650 - 750 mV</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">Chlore Libre Estimé</div>
-            <div class="metric-val" style="color: #16a34a;">${d.free_cl} ppm</div>
+            <div class="metric-val" style="color: #16a34a;">${escapeHtml(d.free_cl)} ppm</div>
             <div class="metric-target">Recommandé : 1.0 - 2.0</div>
           </div>
           <div class="metric-box">
             <div class="metric-label">Chlore Actif (HOCl)</div>
-            <div class="metric-val" style="color: #d97706;">${d.active_cl} ppm</div>
+            <div class="metric-val" style="color: #d97706;">${escapeHtml(d.active_cl)} ppm</div>
             <div class="metric-target">Désinfectant réel</div>
           </div>
         </div>
@@ -1370,11 +1455,11 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div class="advice-card-title">
             <span>⚖️</span> Équilibre de l'eau (LSI)
           </div>
-          <div class="badge-status-tag ${Math.abs(lsi) < 0.3 ? "tag-ok" : "tag-warn"}">${d.lsi_status}</div>
+          <div class="badge-status-tag ${escapeHtml(lsiTagClass)}">${escapeHtml(d.lsi_status)}</div>
         </div>
         <div class="lsi-bar-wrapper">
           <div class="lsi-gradient-bar">
-            <div class="lsi-cursor" style="left: ${lsi_cursor_pct}%;"></div>
+            ${hasLsi ? `<div class="lsi-cursor" style="left: ${escapeHtml(lsi_cursor_pct)}%;"></div>` : ""}
           </div>
           <div class="lsi-labels-row">
             <span>Corrosive (-1.0)</span>
@@ -1385,13 +1470,16 @@ class DomoLinkPoolControlPanel extends HTMLElement {
         <div class="advice-action-box" style="margin-top: 14px;">
           <div class="action-icon">📘</div>
           <div>
-            <strong>Indice LSI : ${lsi > 0 ? "+" : ""}${lsi}</strong> — 
             ${
-              Math.abs(lsi) <= 0.3
-                ? "Votre eau est parfaitement équilibrée. Le liner, la tuyauterie et les sondes de mesure sont préservés."
-                : lsi > 0.3
-                ? "L'eau a tendance à précipiter le calcaire (risque de dépôts blanchâtres sur la ligne d'eau et dans le filtre)."
-                : "L'eau est corrosive et agressive pour les éléments métalliques et les joints."
+              !hasLsi
+                ? `<strong>Indice LSI : --</strong> — Calcul impossible en l'absence de mesures de pH ou de température.`
+                : `<strong>Indice LSI : ${lsi > 0 ? "+" : ""}${escapeHtml(lsi)}</strong> — ${
+                    Math.abs(lsi) <= 0.3
+                      ? "Votre eau est parfaitement équilibrée. Le liner, la tuyauterie et les sondes de mesure sont préservés."
+                      : lsi > 0.3
+                      ? "L'eau a tendance à précipiter le calcaire (risque de dépôts blanchâtres sur la ligne d'eau et dans le filtre)."
+                      : "L'eau est corrosive et agressive pour les éléments métalliques et les joints."
+                  }`
             }
           </div>
         </div>
@@ -1403,12 +1491,12 @@ class DomoLinkPoolControlPanel extends HTMLElement {
           <div class="advice-card-title">
             <span>⏱️</span> Optimisation Filtration
           </div>
-          <div class="badge-status-tag tag-info">${d.pump_state === "on" ? "En marche" : "À l'arrêt"}</div>
+          <div class="badge-status-tag tag-info">${escapeHtml(pumpStatusLabel)}</div>
         </div>
         <div class="advice-action-box">
           <div class="action-icon">🏊</div>
           <div>
-            <strong>Recommandation :</strong> ${d.advice_filtration}.<br>
+            <strong>Recommandation :</strong> ${d.advice_filtration === "--" ? "En attente de la température de l'eau" : escapeHtml(d.advice_filtration)}.<br>
             <em>Règle d'or :</em> Filtrez en journée pendant les heures les plus chaudes et d'ensoleillement pour une efficacité maximale contre la photosynthèse des algues.
           </div>
         </div>
@@ -1645,7 +1733,7 @@ function launchSocrateRulesEasterEgg(targetRoot) {
     const subEl = overlay.querySelector("#socrateSub");
     const hintEl = overlay.querySelector("#socrateExitHint");
     const instEl = overlay.querySelector("#socrateInstructions");
-    if (subEl) subEl.innerHTML = host.t("easter_egg_sub");
+    if (subEl) subEl.textContent = host.t("easter_egg_sub");
     if (hintEl) hintEl.textContent = host.t("easter_egg_hint");
     if (instEl) instEl.textContent = host.t("easter_egg_instructions");
   }
