@@ -25,8 +25,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         # ── 2. 🌤️ Météo & Conditions Extérieures ────────────
         ("air_temp",            "air_temp",            "°C",  SensorDeviceClass.TEMPERATURE, "mdi:thermometer-lines", None),
         ("uv_index",            "uv_index",            "UV",  None,                          "mdi:sun-wireless", None),
+        ("rain_probability",    "rain_probability",    "%",   None,                          "mdi:weather-rainy", None),
+        ("wind_speed",          "wind_speed",          "km/h", SensorDeviceClass.WIND_SPEED, "mdi:weather-windy", None),
+        ("battery",             "battery",             "%",   SensorDeviceClass.BATTERY,     "mdi:battery", EntityCategory.DIAGNOSTIC),
 
-        # ── 5. 📜 Moyennes & Calculs Chimie ──────────────────
+        # ── 3. 📜 Moyennes & Calculs Chimie ──────────────────
         ("lsi",             "lsi",             None,    None,                          "mdi:water-percent", None),
         ("lsi_status",      "lsi_status",      None,    None,                          "mdi:water-check", None),
         ("ph_equilibre",    "ph_equilibre",    "pH",    None,                          "mdi:water-opacity", None),
@@ -86,6 +89,8 @@ class DomolinkPoolFullSensor(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if not self.coordinator.data:
             return None
-        if self._data_key in ("pump_hours", "conseil_filtration", "ph", "water_state"):
-            return {"pump_entity": self.coordinator.data.get("pump_entity") or None}
-        return None
+        attrs = {}
+        if self._data_key in ("pump_hours", "conseil_filtration", "ph", "water_state", "temperature"):
+            attrs["pump_entity"] = self.coordinator.data.get("pump_entity") or None
+            attrs["configured_entities"] = self.coordinator.data.get("configured_entities") or {}
+        return attrs or None

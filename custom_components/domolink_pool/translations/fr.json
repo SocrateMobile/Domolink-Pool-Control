@@ -3,13 +3,20 @@
     "step": {
       "user": {
         "title": "Configuration DomoLink Pool Control",
-        "description": "Sélectionnez les entités de vos capteurs locaux (Zigbee, Tuya, etc.) pour surveiller votre piscine.",
+        "description": "Sélectionnez les entités de vos capteurs locaux (Zigbee, Tuya, Shelly, etc.) pour surveiller votre piscine.",
         "data": {
           "ph_entity": "Capteur de pH",
           "water_temp_entity": "Capteur de température de l'eau",
           "orp_entity": "Capteur Redox / Chlore (ORP) (Optionnel)",
+          "conductivity_entity": "Capteur de conductivité / TDS (Optionnel)",
+          "pump_entity": "Interrupteur / Relais de la pompe (Optionnel)",
           "air_temp_entity": "Capteur température de l'air (Optionnel)",
-          "uv_entity": "Capteur indice UV (Optionnel)"
+          "uv_entity": "Capteur indice UV (Optionnel)",
+          "rain_entity": "Capteur probabilité de pluie (Optionnel)",
+          "wind_entity": "Capteur vitesse du vent (Optionnel)",
+          "weather_entity": "Entité météo générale (Optionnel)",
+          "battery_entity": "Capteur niveau de batterie (Optionnel)",
+          "pump_mode_entity": "Sélecteur de mode de filtration (Optionnel)"
         }
       }
     },
@@ -20,9 +27,21 @@
   "options": {
     "step": {
       "init": {
-        "title": "Paramètres de la piscine et de l'eau",
-        "description": "Ajustez le volume et les valeurs de chimie de l'eau pour les calculs de dosage.",
+        "title": "Paramètres de la piscine et choix des entités",
+        "description": "Configurez ou modifiez vos entités et paramètres chimiques à tout moment.",
         "data": {
+          "ph_entity": "Capteur de pH",
+          "water_temp_entity": "Capteur de température de l'eau",
+          "orp_entity": "Capteur Redox / Chlore (ORP)",
+          "conductivity_entity": "Capteur conductivité / TDS",
+          "pump_entity": "Relais / Switch de filtration",
+          "air_temp_entity": "Capteur température de l'air",
+          "uv_entity": "Capteur indice UV",
+          "rain_entity": "Capteur probabilité de pluie",
+          "wind_entity": "Capteur vitesse du vent",
+          "weather_entity": "Entité météo générale",
+          "battery_entity": "Capteur niveau de batterie",
+          "pump_mode_entity": "Sélecteur de mode de filtration",
           "pool_volume": "Volume de la piscine (m³)",
           "tac": "Alcalinité (TAC) en ppm",
           "th": "Dureté (TH) en ppm",
@@ -68,6 +87,15 @@
       },
       "uv_index": {
         "name": "Indice UV"
+      },
+      "rain_probability": {
+        "name": "Probabilité de pluie"
+      },
+      "wind_speed": {
+        "name": "Vitesse du vent"
+      },
+      "battery": {
+        "name": "Batterie"
       },
       "lsi": {
         "name": "Indice de saturation LSI"

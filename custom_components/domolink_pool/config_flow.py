@@ -32,9 +32,14 @@ class DomolinkPoolConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required("water_temp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Optional("orp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Optional("conductivity_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
-            vol.Optional("pump_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
+            vol.Optional("pump_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "light", "input_boolean"])),
             vol.Optional("air_temp_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
             vol.Optional("uv_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("rain_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("wind_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("weather_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="weather")),
+            vol.Optional("battery_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("pump_mode_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain=["select", "input_select"])),
         })
 
         return self.async_show_form(
@@ -51,7 +56,7 @@ class DomolinkPoolConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class DomolinkPoolOptionsFlowHandler(config_entries.OptionsFlow):
-    """Options de chimie de l'eau et configuration."""
+    """Options de chimie de l'eau et configuration des entités personnalisées."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry | None = None) -> None:
         """Initialise l'OptionsFlow sans écraser la propriété read-only config_entry (HA 2024.11+)."""
@@ -64,7 +69,18 @@ class DomolinkPoolOptionsFlowHandler(config_entries.OptionsFlow):
         entry = self._config_entry or getattr(self, "config_entry", None)
         opt = {**(entry.data if entry else {}), **(entry.options if entry else {})}
         schema = vol.Schema({
-            vol.Optional("pump_entity", description={"suggested_value": opt.get("pump_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="switch")),
+            vol.Optional("ph_entity", description={"suggested_value": opt.get("ph_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("water_temp_entity", description={"suggested_value": opt.get("water_temp_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("orp_entity", description={"suggested_value": opt.get("orp_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("conductivity_entity", description={"suggested_value": opt.get("conductivity_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("pump_entity", description={"suggested_value": opt.get("pump_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain=["switch", "light", "input_boolean"])),
+            vol.Optional("air_temp_entity", description={"suggested_value": opt.get("air_temp_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("uv_entity", description={"suggested_value": opt.get("uv_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("rain_entity", description={"suggested_value": opt.get("rain_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("wind_entity", description={"suggested_value": opt.get("wind_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("weather_entity", description={"suggested_value": opt.get("weather_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="weather")),
+            vol.Optional("battery_entity", description={"suggested_value": opt.get("battery_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain="sensor")),
+            vol.Optional("pump_mode_entity", description={"suggested_value": opt.get("pump_mode_entity")}): selector.EntitySelector(selector.EntitySelectorConfig(domain=["select", "input_select"])),
             vol.Optional(CONF_TAC, default=opt.get(CONF_TAC, DEFAULT_TAC)): int,
             vol.Optional(CONF_TH, default=opt.get(CONF_TH, DEFAULT_TH)): int,
             vol.Optional(CONF_CYA, default=opt.get(CONF_CYA, DEFAULT_CYA)): int,

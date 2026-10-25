@@ -34,10 +34,6 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Récupère l'état des capteurs configurés."""
-        data = self.entry.data
-        options = self.entry.options
-
-        # Fetch entities
         opts = {**self.entry.data, **self.entry.options}
         ph_ent = self.hass.states.get(opts.get("ph_entity", ""))
         water_ent = self.hass.states.get(opts.get("water_temp_entity", ""))
@@ -46,6 +42,11 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
         air_ent = self.hass.states.get(opts.get("air_temp_entity", ""))
         uv_ent = self.hass.states.get(opts.get("uv_entity", ""))
         pump_ent_id = opts.get("pump_entity", "")
+        rain_ent = self.hass.states.get(opts.get("rain_entity", ""))
+        wind_ent = self.hass.states.get(opts.get("wind_entity", ""))
+        weather_ent = self.hass.states.get(opts.get("weather_entity", ""))
+        battery_ent = self.hass.states.get(opts.get("battery_entity", ""))
+        pump_mode_ent_id = opts.get("pump_mode_entity", "")
 
         def safe_float(state):
             try:
@@ -59,6 +60,31 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
         cond = safe_float(cond_ent)
         air_temp = safe_float(air_ent)
         uv = safe_float(uv_ent)
+        rain = safe_float(rain_ent)
+        wind = safe_float(wind_ent)
+        battery = safe_float(battery_ent)
+
+        # Fallback météo si non configurés explicitement
+        if weather_ent and weather_ent.state not in ("unavailable", "unknown"):
+            w_attrs = weather_ent.attributes or {}
+            if air_temp is None and "temperature" in w_attrs:
+                try:
+                    air_temp = float(w_attrs["temperature"])
+                except (ValueError, TypeError):
+                    pass
+            if wind is None and "wind_speed" in w_attrs:
+                try:
+                    wind = float(w_attrs["wind_speed"])
+                except (ValueError, TypeError):
+                    pass
+            if rain is None:
+                for k in ("precipitation_probability", "humidity"):
+                    if k in w_attrs:
+                        try:
+                            rain = float(w_attrs[k])
+                            break
+                        except (ValueError, TypeError):
+                            pass
 
         base_data = {
             "ph": ph,
@@ -67,7 +93,26 @@ class DomolinkPoolCoordinator(DataUpdateCoordinator):
             "conductivity": cond,
             "air_temp": air_temp,
             "uv_index": uv,
+            "rain_probability": rain,
+            "wind_speed": wind,
+            "battery": battery,
             "pump_entity": pump_ent_id,
+            "pump_mode_entity": pump_mode_ent_id,
+            "weather_entity": opts.get("weather_entity", ""),
+            "configured_entities": {
+                "ph_entity": opts.get("ph_entity"),
+                "water_temp_entity": opts.get("water_temp_entity"),
+                "orp_entity": opts.get("orp_entity"),
+                "conductivity_entity": opts.get("conductivity_entity"),
+                "pump_entity": opts.get("pump_entity"),
+                "air_temp_entity": opts.get("air_temp_entity"),
+                "uv_entity": opts.get("uv_entity"),
+                "rain_entity": opts.get("rain_entity"),
+                "wind_entity": opts.get("wind_entity"),
+                "weather_entity": opts.get("weather_entity"),
+                "battery_entity": opts.get("battery_entity"),
+                "pump_mode_entity": opts.get("pump_mode_entity"),
+            },
             "last_update": dt_util.now()
         }
 
@@ -95,31 +140,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # 1. Enregistrer le chemin statique pour le frontend
     frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
-    if True:
-        if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:
-            try:
-                await hass.http.async_register_static_paths(
-                    [
-                        StaticPathConfig("/domolink_pool_panel", frontend_dir, cache_headers=False),
-                        StaticPathConfig("/domolink_pool_frontend", frontend_dir, cache_headers=False),
-                    ]
-                )
-            except Exception as e:
-                _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths async: %s", e)
-        elif hasattr(hass.http, "register_static_path"):
-            try:
-                hass.http.register_static_path(
-                    "/domolink_pool_panel",
-                    frontend_dir,
-                    cache_headers=False,
-                )
-                hass.http.register_static_path(
-                    "/domolink_pool_frontend",
-                    frontend_dir,
-                    cache_headers=False,
-                )
-            except Exception as e:
-                _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths: %s", e)
+    if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:
+        try:
+            await hass.http.async_register_static_paths(
+                [
+                    StaticPathConfig("/domolink_pool_panel", frontend_dir, cache_headers=False),
+                    StaticPathConfig("/domolink_pool_frontend", frontend_dir, cache_headers=False),
+                ]
+            )
+        except Exception as e:
+            _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths async: %s", e)
+    elif hasattr(hass.http, "register_static_path"):
+        try:
+            hass.http.register_static_path(
+                "/domolink_pool_panel",
+                frontend_dir,
+                cache_headers=False,
+            )
+            hass.http.register_static_path(
+                "/domolink_pool_frontend",
+                frontend_dir,
+                cache_headers=False,
+            )
+        except Exception as e:
+            _LOGGER.debug("DomoLink Pool Control: Erreur lors de l'enregistrement des static paths: %s", e)
 
     # 2. Enregistrer le panel frontend
     panel_url = f"/domolink_pool_panel/domolink_pool-panel.js?v={VERSION}"
@@ -170,6 +214,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         opts.get("pump_entity"),
         opts.get("air_temp_entity"),
         opts.get("uv_entity"),
+        opts.get("rain_entity"),
+        opts.get("wind_entity"),
+        opts.get("weather_entity"),
+        opts.get("battery_entity"),
+        opts.get("pump_mode_entity"),
     ]
     entities_to_track = [e for e in entities_to_track if e]
     if entities_to_track:
