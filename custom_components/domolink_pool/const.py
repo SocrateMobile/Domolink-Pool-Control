@@ -8,9 +8,9 @@ NAME = "DomoLink Pool Control"
 _MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "manifest.json")
 try:
     with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
-        VERSION = json.load(_f).get("version", "1.0.15")
+        VERSION = json.load(_f).get("version", "3.0.0")
 except Exception:
-    VERSION = "1.0.15"
+    VERSION = "3.0.0"
 
 PLATFORMS = [
     Platform.SENSOR,
