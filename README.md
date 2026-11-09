@@ -1,5 +1,10 @@
 # DomoLink Pool Control
 
+[![Documentation Officielle](https://img.shields.io/badge/Documentation-socratemobile.fr-06b6d4.svg?logo=googlechrome&logoColor=white)](https://socratemobile.fr/integration.html?id=domolink-pool-control)
+
+> 🌐 **Site officiel & Documentation complète** : Retrouvez le guide d'installation pas à pas, les entités supportées et les exemples d'automatisations sur [socratemobile.fr](https://socratemobile.fr/integration.html?id=domolink-pool-control).
+
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/default)
 [![Validate](https://github.com/SocrateMobile/Domolink-Pool-Control/actions/workflows/validate.yml/badge.svg)](https://github.com/SocrateMobile/Domolink-Pool-Control/actions)
 
